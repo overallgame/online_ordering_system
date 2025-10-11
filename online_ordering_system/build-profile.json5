@@ -39,20 +39,16 @@
       ]
     },
     {
-      "name": "takeout",
-      "srcPath": "./features/takeout",
+      "name": "Order",
+      "srcPath": "./features/Order"
     },
     {
-      "name": "order",
-      "srcPath": "./features/order",
+      "name": "User",
+      "srcPath": "./features/User"
     },
     {
-      "name": "user",
-      "srcPath": "./features/user",
-    },
-    {
-      "name": "home",
-      "srcPath": "./features/home",
+      "name": "Restaurant",
+      "srcPath": "./features/Restaurant"
     },
     {
       "name": "Utils",
@@ -60,11 +56,11 @@
     },
     {
       "name": "common",
-      "srcPath": "./commons/common",
+      "srcPath": "./commons/common"
     },
     {
-      "name": "auth",
-      "srcPath": "./features/auth",
+      "name": "Authentication",
+      "srcPath": "./features/Authentication"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "common",
+    "name": "Restaurant",
     "type": "har",
     "deviceTypes": [
       "default",
