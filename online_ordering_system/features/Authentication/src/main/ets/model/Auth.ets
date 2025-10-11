@@ -3,7 +3,6 @@ import { User } from "common/src/main/ets/model/User";
 export class LoginRequest {
   username: string = '';
   password: string = '';
-  rememberMe: boolean = false;
 
   validate(): ValidationResult {
     if (!this.username.trim()) {
@@ -25,7 +24,6 @@ export class RegisterRequest {
   email: string = '';
   password: string = '';
   confirmPassword: string = '';
-  agreeToTerms: boolean = false;
 
   validate(): ValidationResult {
     if (!this.username.trim()) {
@@ -51,9 +49,6 @@ export class RegisterRequest {
     }
     if (this.password !== this.confirmPassword) {
       return { isValid: false, message: '两次输入的密码不一致' };
-    }
-    if (!this.agreeToTerms) {
-      return { isValid: false, message: '请同意用户协议和隐私政策' };
     }
     return { isValid: true, message: '' };
   }
