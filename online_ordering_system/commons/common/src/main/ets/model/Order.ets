@@ -1,0 +1,61 @@
+import { CustomizationChoice, Dish } from "./Menu";
+import { PaymentMethod } from "./User";
+
+export class Order {
+  orderId: string = '';
+  userId: string = '';
+  restaurantId: string = '';
+  items: Array<OrderItem> = [];
+  totalAmount: number = 0;
+  discountAmount: number = 0;
+  finalAmount: number = 0;
+  status: OrderStatus = OrderStatus.PENDING;
+  orderType: OrderType = OrderType.DINE_IN;
+  createTime: number = 0;
+  updateTime: number = 0;
+  estimatedDeliveryTime?: number;
+  actualDeliveryTime?: number;
+  paymentMethod: PaymentMethod = PaymentMethod.WECHAT;
+  paymentStatus: PaymentStatus = PaymentStatus.PENDING;
+  tableNumber?: string;
+  deliveryAddress?: string;
+  customerNote?: string;
+}
+
+export class OrderItem {
+  itemId: string = '';
+  dish: Dish = new Dish();
+  quantity: number = 0;
+  unitPrice: number = 0;
+  totalPrice: number = 0;
+  customizations: Array<SelectedCustomization> = [];
+  note?: string;
+}
+
+export class SelectedCustomization {
+  optionId: string = '';
+  optionName: string = '';
+  selectedChoices: Array<CustomizationChoice> = [];
+}
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  PREPARING = 'preparing',
+  READY = 'ready',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled'
+}
+
+export enum OrderType {
+  DINE_IN = 'dine_in',
+  TAKEAWAY = 'takeaway',
+  DELIVERY = 'delivery'
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  FAILED = 'failed',
+  REFUNDED = 'refunded'
+}
