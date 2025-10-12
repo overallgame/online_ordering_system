@@ -5,7 +5,7 @@ import { MainContentView } from '../view/MainContentView';
 
 @Entry
 @Component
-struct ProfilePage {
+export  struct UserPage {
   @State userViewModel: UserViewModel = new UserViewModel();
 
   build() {

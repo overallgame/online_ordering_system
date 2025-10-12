@@ -14,6 +14,22 @@ export class User {
   isLoggedIn: boolean = false;
   token?: string;
   lastLoginTime: number = 0;
+
+
+  constructor(
+    userId:string,
+    username: string,
+    phone: string,
+    email: string ,
+    avatar?: string,
+    address?: string) {
+    this.userId=userId;
+    this.username=username;
+    this.phone=phone;
+    this.email=email;
+    this.avatar=avatar;
+    this.address=address;
+  }
 }
 
 export class UserPreferences {

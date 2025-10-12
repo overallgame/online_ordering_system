@@ -11,7 +11,7 @@ export class UserViewModel {
     '小七七',
     '15936044956',
     'user@example.com',
-    'aaaaaa',
+    'dddaaa',
     '北京市朝阳区'
   );
 
