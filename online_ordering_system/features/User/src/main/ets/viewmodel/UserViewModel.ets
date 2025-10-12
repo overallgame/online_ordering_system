@@ -6,14 +6,9 @@ import { User } from 'common';
 @Observed
 export class UserViewModel {
   // 用户信息
-  user: User = new User(
-    '1',
-    '小七七',
-    '15936044956',
-    'user@example.com',
-    'dddaaa',
-    '北京市朝阳区'
-  );
+  user: User = new User();
+
+
 
 
   /**

@@ -26,7 +26,7 @@ export struct UserHeaderView {
         
         // 用户信息
         Column() {
-          Text(this.userViewModel.user.username)
+          Text('XXX')
             .fontSize(20)
             .fontColor('#000000')
             .fontWeight(FontWeight.Bold)
