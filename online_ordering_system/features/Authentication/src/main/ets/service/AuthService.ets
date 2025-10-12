@@ -107,42 +107,42 @@ export class AuthService {
     }
   }
 
-  async autoLogin(): Promise<boolean> {
-    try {
-      // 检查是否已有登录用户
-      if (this.appDataManager.isLoggedIn()) {
-        return true;
-      }
-
-      // 尝试从数据库加载用户
-      await this.appDataManager.loadCurrentUser();
-      return this.appDataManager.isLoggedIn();
-    } catch (error) {
-      console.error('Auto login error:', error);
-      return false;
-    }
-  }
-
-  async logout(): Promise<boolean> {
-    try {
-      await this.appDataManager.logout()
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    }
-
-    // 清除本地状态
-    return await this.appDataManager.logout();
-  }
-
-  // 获取当前用户信息
-  getCurrentUser(): User | null {
-    return this.appDataManager.getCurrentUser();
-  }
-
-  // 检查登录状态
-  isLoggedIn(): boolean {
-    return this.appDataManager.isLoggedIn();
-  }
+  // async autoLogin(): Promise<boolean> {
+  //   try {
+  //     // 检查是否已有登录用户
+  //     if (this.appDataManager.isLoggedIn()) {
+  //       return true;
+  //     }
+  //
+  //     // 尝试从数据库加载用户
+  //     await this.appDataManager.loadCurrentUser();
+  //     return this.appDataManager.isLoggedIn();
+  //   } catch (error) {
+  //     console.error('Auto login error:', error);
+  //     return false;
+  //   }
+  // }
+  //
+  // async logout(): Promise<boolean> {
+  //   try {
+  //     await this.appDataManager.logout()
+  //   } catch (error) {
+  //     console.error('Logout API call failed:', error);
+  //   }
+  //
+  //   // 清除本地状态
+  //   return await this.appDataManager.logout();
+  // }
+  //
+  // // 获取当前用户信息
+  // getCurrentUser(): User | null {
+  //   return this.appDataManager.getCurrentUser();
+  // }
+  //
+  // // 检查登录状态
+  // isLoggedIn(): boolean {
+  //   return this.appDataManager.isLoggedIn();
+  // }
 
   private createUserFromResponse(data: AuthResponse): User {
     const user = new User();
@@ -162,3 +162,5 @@ export class AuthService {
     return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 }
+
+export { AuthResponse, LoginRequest, RegisterRequest };

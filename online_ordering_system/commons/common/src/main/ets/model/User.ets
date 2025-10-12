@@ -2,7 +2,7 @@ export class User {
   userId: string = '';
   username: string = '';
   phone: string = '';
-  email: string = '';
+  email?: string = '';
   avatar?: string;
   address?: string;
   createTime: number = 0;
