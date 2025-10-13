@@ -6,6 +6,7 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 @Component
 export struct UserHeaderView {
   @ObjectLink userViewModel: UserViewModel;
+  @Consume('navStack') navStack: NavPathStack;
 
   build() {
     Stack() {
@@ -36,6 +37,11 @@ export struct UserHeaderView {
             .fontSize(14)
             .fontColor('#666666')
             .onClick(() => {
+              if (this.navStack) {
+                this.navStack.pushPath({ name: 'HomePage' });
+              } else {
+                console.error("navStack is not initialized");
+              }
 
             })
         }
@@ -55,6 +61,12 @@ export struct UserHeaderView {
               .margin({ top: 4 })
           }
           .onClick(() => {
+            if (this.navStack) {
+              this.navStack.pushPath({ name: 'AddressPage' });
+            } else {
+              console.error("navStack is not initialized");
+            }
+
 
           })
           
@@ -69,6 +81,11 @@ export struct UserHeaderView {
           }
           .margin({ left: 20 })
           .onClick(() => {
+            if (this.navStack) {
+              this.navStack.pushPath({ name: 'SettingPage' });
+            } else {
+              console.error("navStack is not initialized");
+            }
 
           })
         }

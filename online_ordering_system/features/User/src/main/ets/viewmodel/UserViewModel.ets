@@ -1,4 +1,4 @@
-import { User } from 'common';
+import { User, AppDataManager} from 'common';
 
 /**
  * 用户ViewModel - 处理用户相关的业务逻辑
@@ -6,7 +6,7 @@ import { User } from 'common';
 @Observed
 export class UserViewModel {
   // 用户信息
-  user: User = new User();
+  user: User | null = AppDataManager.getInstance().getCurrentUser();
 
 
 

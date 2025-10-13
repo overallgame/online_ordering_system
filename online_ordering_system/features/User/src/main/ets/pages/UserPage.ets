@@ -2,21 +2,41 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 import { UserHeaderView } from '../view/UserHeaderView';
 import { OrderStatusView } from '../view/OrderStatusView';
 import { MainContentView } from '../view/MainContentView';
-
+import {HomePage} from './HomePage';
+import {SettingPage} from './SettingPage'
+import {AddressPage} from './AddressPage'
 @Entry
 @Component
 export  struct UserPage {
   @State userViewModel: UserViewModel = new UserViewModel();
+  @Provide('navStack') navStack: NavPathStack = new NavPathStack();
+
+  @Builder
+  PageMap(name: string) {
+    if (name === 'HomePage') {
+      HomePage();
+    }else if(name=='SettingPage'){
+      SettingPage()
+    }else if(name=='AddressPage'){
+      AddressPage()
+    }
+  }
 
   build() {
-    Column() {
+    Navigation(this.navStack){
+      Column() {
 
-      // 主要内容区域
-      this.buildMainContent()
+        // 主要内容区域
+        this.buildMainContent()
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F5F5F5')
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F5F5F5')
+    .title('个人中心')
+    .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
+    .navDestination(this.PageMap)
   }
 
   /**
