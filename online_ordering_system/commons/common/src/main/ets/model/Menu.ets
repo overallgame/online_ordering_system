@@ -30,6 +30,8 @@ export class Dish {
   customizationOptions?: Array<CustomizationOption>;
   spiceLevel: SpiceLevel = SpiceLevel.MILD;
   preparationTime: number = 15; // 分钟
+  rating: number = 0;
+  reviewCount: number = 0;
 }
 
 export class CustomizationOption {
