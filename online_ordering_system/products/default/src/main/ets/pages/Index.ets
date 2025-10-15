@@ -19,9 +19,9 @@ struct Index {
   }
 
   @Builder
-  tabBarBuilder(title: string, targetIndex: number, icon: Resource) {
+  tabBarBuilder(title: string, targetIndex: number, icon: Resource,activeIcon: Resource) {
     Column() {
-      Image(icon)
+      Image(this.currentIndex==targetIndex?activeIcon:icon)
         .width(24)
         .height(24)
         .colorFilter(this.currentIndex === targetIndex ?
@@ -64,20 +64,16 @@ struct Index {
     }) {
       TabContent() {
         // 首页内容
-      }.tabBar(this.tabBarBuilder("首页", 0, $r("app.media.home")))
-
-      TabContent() {
-        // 分类内容
-      }.tabBar(this.tabBarBuilder("分类", 1, $r("app.media.category")))
+      }.tabBar(this.tabBarBuilder("首页", 0, $r("app.media.home"),$r("app.media.home_active")))
 
       TabContent() {
         // 订单内容
-      }.tabBar(this.tabBarBuilder("订单", 2, $r("app.media.order")))
+      }.tabBar(this.tabBarBuilder("订单", 1, $r("app.media.order"),$r("app.media.order_active")))
 
       TabContent() {
         // 我的内容
         UserPage()
-      }.tabBar(this.tabBarBuilder("我", 3, $r("app.media.mine")))
+      }.tabBar(this.tabBarBuilder("我", 2, $r("app.media.mine"),$r("app.media.mine_active")))
     }
     .scrollable(false)
     .vertical(this.currentBreakpoint === BreakpointTypeEnum.LG ? true : false)

@@ -5,7 +5,7 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
  */
 @Component
 export struct UserHeaderView {
-  @ObjectLink userViewModel: UserViewModel;
+  @Prop userViewModel: UserViewModel;
   @Consume('navStack') navStack: NavPathStack;
 
   build() {

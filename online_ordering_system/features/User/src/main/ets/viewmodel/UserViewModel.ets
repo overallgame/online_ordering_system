@@ -21,10 +21,10 @@ export class UserViewModel {
    */
   async loadUserInfo(): Promise<void> {
     try {
-      //const currentUser = AppDataManager.getInstance().getCurrentUser();
-      //if (currentUser) {
-        //this.user = currentUser;
-      //} else {
+      const currentUser = AppDataManager.getInstance().getCurrentUser();
+      if (currentUser) {
+        this.user = currentUser;
+      } else {
         // 只有在没有用户数据时才创建默认用户
         this.user = new User();
         this.user.userId = "U123456789"; // 必填，唯一用户ID
@@ -46,7 +46,7 @@ export class UserViewModel {
         
         // 将默认用户保存到AppDataManager
         //await AppDataManager.getInstance().setCurrentUser(this.user);
-      //}
+      }
     } catch (error) {
       console.error('加载用户信息失败:', error);
     }

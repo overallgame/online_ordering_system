@@ -54,7 +54,7 @@ export struct UserDetailPage {
   @Builder
   buildTopBar() {
     Row() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.back'))
         .width(24)
         .height(24)
         .onClick(() => {
@@ -114,7 +114,7 @@ export struct UserDetailPage {
   buildAvatarSection() {
     Column() {
       Stack() {
-        Image(this.userViewModel.user?.avatar ? this.userViewModel.user.avatar : $r('app.media.default_avatar'))
+        Image($r('app.media.default_avatar'))
           .width(100)
           .height(100)
           .borderRadius(50)
@@ -315,13 +315,8 @@ export struct UserDetailPage {
       // 直接通过AppDataManager保存用户信息
       // 这会自动触发监听器更新UserViewModel
       console.error(this.userViewModel.user?.username);
-      //await AppDataManager.getInstance().setCurrentUser(this.editUser);
-      this.userViewModel.user=this.editUser;
-      
-      console.error(this.userViewModel.user?.username);
+      await AppDataManager.getInstance().setCurrentUser(this.editUser);
       this.isEditing = false;
-      console.error(this.userViewModel.user?.username);
-      
       // 显示成功提示
       //this.showToast('保存成功');
     } catch (error) {
