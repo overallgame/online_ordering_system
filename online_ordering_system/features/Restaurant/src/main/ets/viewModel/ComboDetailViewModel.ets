@@ -1,0 +1,69 @@
+import { Combo } from 'common';
+import { ComboRepository } from '../repository/ComboRepository';
+import { ReviewRepository, DishReview } from '../repository/ReviewRepository';
+import { DataState, idleState, loadingState, successState, errorState } from '../util/DataState';
+import { Failure } from '../util/Result';
+
+export class ComboDetailViewModel {
+  private comboRepository: ComboRepository = new ComboRepository();
+  private reviewRepository: ReviewRepository = new ReviewRepository();
+
+  // 套餐信息
+  combo?: Combo;
+  
+  // 评论列表数据状态
+  reviewsState: DataState<Array<DishReview>> = idleState<Array<DishReview>>([]);
+  isLoadingReviews: boolean = false;
+  isLoadingMoreReviews: boolean = false;
+  hasMoreReviews: boolean = false;
+  reviewPage: number = 1;
+  readonly reviewPageSize: number = 10;
+
+  setCombo(combo: Combo): void {
+    this.combo = combo;
+  }
+
+  async loadReviews(comboId: string): Promise<void> {
+    this.reviewPage = 1;
+    this.reviewsState = loadingState(this.reviewsState.data);
+    const result = await this.reviewRepository.fetchDishReviews(comboId, this.reviewPage, this.reviewPageSize);
+    if (result.ok) {
+      this.reviewsState = successState(result.data.items);
+      this.hasMoreReviews = result.data.hasMore;
+    } else {
+      const failure: Failure = result as Failure;
+      this.reviewsState = errorState([], failure.error);
+      this.hasMoreReviews = false;
+    }
+  }
+
+  async loadMoreReviews(comboId: string): Promise<void> {
+    if (this.isLoadingMoreReviews || !this.hasMoreReviews) return;
+    this.isLoadingMoreReviews = true;
+    const nextPage = this.reviewPage + 1;
+    const result = await this.reviewRepository.fetchDishReviews(comboId, nextPage, this.reviewPageSize);
+    if (result.ok) {
+      this.reviewPage = nextPage;
+      this.reviewsState = successState(this.reviewsState.data.concat(result.data.items));
+      this.hasMoreReviews = result.data.hasMore;
+    } else {
+      const failure: Failure = result as Failure;
+      // 可在 UI 侧根据 isLoadingMoreReviews + failure.error 显示 Toast
+    }
+    this.isLoadingMoreReviews = false;
+  }
+
+  async refreshReviews(comboId: string): Promise<void> {
+    this.isLoadingReviews = true;
+    await this.loadReviews(comboId);
+    this.isLoadingReviews = false;
+  }
+
+  async loadComboDetails(comboId: string): Promise<void> {
+    const result = await this.comboRepository.fetchComboById(comboId);
+    if (result.ok) {
+      this.combo = result.data;
+    }
+  }
+}
+

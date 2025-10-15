@@ -1,4 +1,5 @@
 import { CustomizationChoice, Dish } from "./Menu";
+import { Combo } from "./Combo";
 import { PaymentMethod } from "./User";
 
 export class Order {
@@ -24,7 +25,8 @@ export class Order {
 
 export class OrderItem {
   itemId: string = '';
-  dish: Dish = new Dish();
+  dish?: Dish;
+  combo?: Combo;
   quantity: number = 0;
   unitPrice: number = 0;
   totalPrice: number = 0;

@@ -1,21 +1,28 @@
-import { router } from '@kit.ArkUI';
 import { Dish } from 'common';
-import { DishesViewModel } from '../viewModel/DishesViewModel';
+import { DishViewModel } from '../viewModel/DishViewModel';
 import { LoadStatus } from '../util/DataState';
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum, BreakpointType } from 'utils/src/main/ets/utils/BreakpointSystem';
+import { PageName, DishDetailParams } from '../util/NavigationTypes';
+import { DishDetailPage } from './DishDetailPage';
+import { ComboDetailPage } from './ComboDetailPage';
+import { ComboRecommendPage } from './ComboRecommendPage';
+import { DeliveryPage } from './DeliveryPage';
+import { CheckoutPage } from './CheckoutPage';
+import { PaymentSuccessPage } from './PaymentSuccessPage';
+import { OnlineOrderPage } from './OnlineOrderPage';
 
 // 功能项接口
 interface FeatureItem {
   id: string;
   name: string;
-  icon: string;
+  icon: Resource;
 }
 
 @Entry
 @Component
 struct HomePage {
-  @State searchText: string = '';
+  @Provide('restaurantPathStack') restaurantPathStack: NavPathStack = new NavPathStack();
   // 轮播图数据
   @State banners: string[] = [
     'common/images/banner1.png',
@@ -24,12 +31,11 @@ struct HomePage {
   ];
   // 功能菜单数据
   @State features: FeatureItem[] = [
-    { id: '1', name: '在线预约', icon: '📅' },
-    { id: '2', name: '套餐推荐', icon: '📱' },
-    { id: '3', name: '外卖配送', icon: '🛵' },
-    { id: '4', name: '优惠活动', icon: '🎉' }
+    { id: '1', name: '在线点餐', icon: $r('app.media.orderIcon') },
+    { id: '2', name: '套餐推荐', icon: $r('app.media.ComboIcon') },
+    { id: '3', name: '外卖配送', icon: $r('app.media.deliveryIcon') },
   ];
-  private viewModel: DishesViewModel = new DishesViewModel();
+  private viewModel: DishViewModel = new DishViewModel();
   @State dishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
   @State error?: string = undefined;
@@ -80,75 +86,69 @@ struct HomePage {
   }
 
   build() {
-    Column() {
-      // 第一部分：餐厅名称和搜索框
-      this.buildHeader()
+    Navigation(this.restaurantPathStack) {
+      Column() {
+        // 第一部分：餐厅标题
+        this.buildHeader()
 
-      // 第二部分：轮播图
-      this.buildBanner()
+        // 第二部分：轮播图
+        this.buildBanner()
 
-      // 第三部分：功能按钮
-      this.buildFeatureButtons()
+        // 第三部分：功能按钮
+        this.buildFeatureButtons()
 
-      // 第四部分：两列菜品列表
-      this.buildDishGrid()
+        // 第四部分：菜品列表
+        this.buildDishGrid()
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('sys.color.comp_background_list_card'))
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('sys.color.comp_background_list_card'))
+    .navDestination(this.restaurantRouter)
+    .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
   }
 
-  // 第一部分：餐厅名称和搜索框
+  // 餐厅路由构建器
+  @Builder
+  restaurantRouter(name: string, _param?: Object) {
+    if (name === PageName.DISH_DETAIL) {
+      DishDetailPage()
+    } else if (name === PageName.COMBO_DETAIL) {
+      ComboDetailPage()
+    } else if (name === PageName.COMBO_RECOMMEND) {
+      ComboRecommendPage()
+    } else if (name === PageName.ONLINE_ORDER) {
+      OnlineOrderPage()
+    } else if (name === PageName.DELIVERY) {
+      DeliveryPage()
+    } else if (name === PageName.CHECKOUT) {
+      CheckoutPage()
+    } else if (name === PageName.PAYMENT_SUCCESS) {
+      PaymentSuccessPage()
+    }
+  }
+
+  // 第一部分：餐厅标题
   @Builder
   buildHeader() {
     Row() {
-      Row() {
+      Column() {
         Text('鸿蒙智能点餐')
-          .fontSize(20)
+          .fontSize(28)
           .fontWeight(FontWeight.Bold)
           .fontColor('#333333')
+          .margin({ bottom: 6 })
+        
+        Text('欢迎光临，享受美食时光')
+          .fontSize(15)
+          .fontColor('#666666')
       }
-      .alignItems(VerticalAlign.Center)
-
-      Blank()
-
-      Row() {
-        Text('🔍')
-          .fontSize(16)
-          .margin({ right: 8 })
-
-        TextInput({ placeholder: '搜索美食、商家、菜品', text: this.searchText })
-          .fontSize(8)
-          .backgroundColor(Color.Transparent)
-          .width(this.searchWidth())
-          .onChange((value: string) => {
-            this.searchText = value;
-          })
-
-        if (this.searchText) {
-          Text('✕')
-            .fontSize(14)
-            .fontColor('#999999')
-            .margin({ left: 8 })
-            .onClick(() => {
-              this.searchText = '';
-            })
-        }
-      }
-      .width('60%')
-      .height(36)
-      .backgroundColor('#F5F5F5')
-      .borderRadius(18)
-      .padding({ left: 12, right: 12 })
-      .alignItems(VerticalAlign.Center)
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
     }
     .width('100%')
-    .padding({
-      left: 16,
-      right: 16,
-      top: 16,
-      bottom: 16
-    })
+    .padding({ left: 20, right: 20, bottom: 24 })
     .backgroundColor(Color.White)
   }
 
@@ -179,19 +179,19 @@ struct HomePage {
     Row() {
       ForEach(this.features, (feature: FeatureItem) => {
         Column() {
-          Text(feature.icon)
-            .fontSize(24)
-            .width(48)
-            .height(48)
+          Image(feature.icon)
+            .width(24)
+            .height(24)
             .backgroundColor('#F8F8F8')
-            .borderRadius(24)
-            .textAlign(TextAlign.Center)
+            .borderRadius(30)
+            .objectFit(ImageFit.Contain)
+            .margin({ bottom: 10 })
 
           Text(feature.name)
-            .fontSize(12)
+            .fontSize(10)
             .fontColor('#333333')
         }
-        .width('25%')
+        .width('33%')
         .alignItems(HorizontalAlign.Center)
         .onClick(() => {
           this.handleFeatureClick(feature.id);
@@ -205,12 +205,7 @@ struct HomePage {
     .padding({ top: 12, bottom: 12 })
     .alignSelf(ItemAlign.Center)
     .margin({ bottom: 20 })
-    .shadow({
-      radius: 2,
-      color: '#1A000000',
-      offsetX: 0,
-      offsetY: 1
-    })
+    .shadow({ radius: 2, color: '#1A000000', offsetX: 0, offsetY: 1 })
   }
 
   // 第四部分：菜品列表
@@ -344,12 +339,7 @@ struct HomePage {
     .width('100%')
     .backgroundColor(Color.White)
     .borderRadius(8)
-    .shadow({
-      radius: 2,
-      color: '#1A000000',
-      offsetX: 0,
-      offsetY: 1
-    })
+    .shadow({ radius: 2, color: '#1A000000', offsetX: 0, offsetY: 1 })
     .onClick(() => {
       if (dish.isAvailable) {
         this.showDishDetail(dish);
@@ -388,7 +378,7 @@ struct HomePage {
   // ===== 响应式辅助方法 =====
   private gridColumns(): string {
     const cols: string | undefined = new BreakpointType<string>({
-      sm: '1fr',
+      sm: '1fr 1fr',
       md: '1fr 1fr',
       lg: '1fr 1fr',
       xl: '1fr 1fr 1fr'
@@ -426,39 +416,30 @@ struct HomePage {
     return h || 80;
   }
 
-  private searchWidth(): string {
-    const w: number | string | undefined = new BreakpointType<number | string>({
-      sm: 120,
-      md: 150,
-      lg: 220,
-      xl: 260
-    }).getValue(this.currentBreakpoint);
-    return typeof w === 'number' ? `${w}` : (w || '150');
-  }
-
   // 处理功能点击
   private handleFeatureClick(featureId: string): void {
     switch (featureId) {
-      case '1': // 在线预约
-        router.pushUrl({ url: 'pages/ReservationPage' });
+      case '1': // 在线点餐
+        this.restaurantPathStack.pushPathByName(PageName.ONLINE_ORDER, null);
         break;
-      case '2': // 扫码点餐
-        router.pushUrl({ url: 'pages/ScanQRPage' });
+      case '2': // 套餐推荐
+        this.restaurantPathStack.pushPathByName(PageName.COMBO_RECOMMEND, null);
         break;
       case '3': // 外卖配送
-        router.pushUrl({ url: 'pages/DeliveryPage' });
+        this.restaurantPathStack.pushPathByName(PageName.DELIVERY, null);
         break;
       case '4': // 优惠活动
-        router.pushUrl({ url: 'pages/PromotionPage' });
+        console.log('优惠活动功能待开发');
         break;
     }
   }
 
   // 显示菜品详情
   private showDishDetail(dish: Dish): void {
-    router.pushUrl({
-      url: 'pages/DishDetailPage',
-      params: { dishId: dish.dishId }
-    });
+    const params: DishDetailParams = {
+      dishId: dish.dishId,
+      hideCart: true
+    };
+    this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, params);
   }
 }
