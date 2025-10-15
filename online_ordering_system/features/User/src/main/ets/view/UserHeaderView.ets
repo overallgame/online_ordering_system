@@ -38,7 +38,7 @@ export struct UserHeaderView {
             .fontColor('#666666')
             .onClick(() => {
               if (this.navStack) {
-                this.navStack.pushPath({ name: 'HomePage' });
+                this.navStack.pushPath({ name: 'UserDetailPage' });
               } else {
                 console.error("navStack is not initialized");
               }

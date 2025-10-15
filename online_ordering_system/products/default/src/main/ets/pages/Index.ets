@@ -1,7 +1,7 @@
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { drawing } from '@kit.ArkGraphics2D';
-
+import {UserPage} from 'user'
 @Entry
 @Component
 struct Index {
@@ -76,6 +76,7 @@ struct Index {
 
       TabContent() {
         // 我的内容
+        UserPage()
       }.tabBar(this.tabBarBuilder("我", 3, $r("app.media.mine")))
     }
     .scrollable(false)

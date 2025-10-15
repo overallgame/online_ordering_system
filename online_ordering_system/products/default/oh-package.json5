@@ -6,6 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "utils": "file:../../commons/Utils"
+    "utils": "file:../../commons/Utils",
+    "user": "file:../../features/User"
   }
 }

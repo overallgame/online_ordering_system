@@ -2,9 +2,10 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 import { UserHeaderView } from '../view/UserHeaderView';
 import { OrderStatusView } from '../view/OrderStatusView';
 import { MainContentView } from '../view/MainContentView';
-import {HomePage} from './HomePage';
+//import {HomePage} from './HomePage';
 import {SettingPage} from './SettingPage'
 import {AddressPage} from './AddressPage'
+import {UserDetailPage} from './UserDetailPage'
 @Entry
 @Component
 export  struct UserPage {
@@ -14,11 +15,13 @@ export  struct UserPage {
   @Builder
   PageMap(name: string) {
     if (name === 'HomePage') {
-      HomePage();
+      //HomePage();
     }else if(name=='SettingPage'){
       SettingPage()
     }else if(name=='AddressPage'){
       AddressPage()
+    }else if(name=='UserDetailPage'){
+      UserDetailPage({ userViewModel: this.userViewModel })
     }
   }
 

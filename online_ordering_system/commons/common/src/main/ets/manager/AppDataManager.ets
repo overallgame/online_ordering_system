@@ -40,10 +40,10 @@ export class AppDataManager {
     this._currentUser = user;
 
     if (user) {
-      await this.dbManager.saveUser(user);
+      //await this.dbManager.saveUser(user);
     } else {
       if (this._currentUser) {
-        await this.dbManager.logoutUser(this._currentUser.userId);
+        //await this.dbManager.logoutUser(this._currentUser.userId);
       }
     }
 
@@ -118,6 +118,7 @@ export class AppDataManager {
   }
 
   private _notifyListeners(): void {
+
     this._listeners.forEach(listener => {
       try {
         listener(this._currentUser);
