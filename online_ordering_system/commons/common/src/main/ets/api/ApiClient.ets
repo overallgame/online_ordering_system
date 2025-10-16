@@ -105,4 +105,6 @@ export class ApiEndpoints {
   static readonly REGISTER = '/api/v1/auth/register';
   static readonly LOGOUT = '/api/v1/auth/logout';
   static readonly USER_PROFILE = '/api/v1/user/profile';
+  static readonly UPDATE_USER_PROFILE = '/api/v1/user/profile/update';
+  static readonly UPDATE_USER_AVATAR = '/api/v1/user/avatar/update';
 }

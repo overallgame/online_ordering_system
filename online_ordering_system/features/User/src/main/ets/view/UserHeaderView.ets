@@ -51,24 +51,6 @@ export struct UserHeaderView {
         
         // 右上角功能按钮
         Row() {
-          Column() {
-            Image($r('app.media.reap_address'))
-              .height(15)
-              .width(15)
-            Text('地址')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ top: 4 })
-          }
-          .onClick(() => {
-            if (this.navStack) {
-              this.navStack.pushPath({ name: 'AddressPage' });
-            } else {
-              console.error("navStack is not initialized");
-            }
-
-
-          })
           
           Column() {
             Image($r('app.media.setting'))

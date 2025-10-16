@@ -1,50 +1,63 @@
+import promptAction from '@ohos.promptAction';
+
 /**
- * Toast提示组件
+ * Toast组件 - 显示用户反馈信息
  */
-@Component
-export struct ToastComponent {
-  @State message: string = '';
-  @State isVisible: boolean = false;
-  @State timer: number = -1;
+export class ToastComponent {
+  private static instance: ToastComponent;
 
-  show(message: string, duration: number = 2000) {
-    this.message = message;
-    this.isVisible = true;
-    
-    // 清除之前的定时器
-    if (this.timer !== -1) {
-      clearTimeout(this.timer);
+  public static getInstance(): ToastComponent {
+    if (!ToastComponent.instance) {
+      ToastComponent.instance = new ToastComponent();
     }
-    
-    // 设置新的定时器
-    this.timer = setTimeout(() => {
-      this.hide();
-    }, duration);
+    return ToastComponent.instance;
   }
 
-  hide() {
-    this.isVisible = false;
-    if (this.timer !== -1) {
-      clearTimeout(this.timer);
-      this.timer = -1;
+  /**
+   * 显示Toast消息
+   * @param message 要显示的消息
+   * @param duration 显示时长（毫秒），默认2000ms
+   */
+  show(message: string, duration: number = 2000): void {
+    try {
+      promptAction.showToast({
+        message: message,
+        duration: duration
+      });
+    } catch (error) {
+      console.error('显示Toast失败:', error);
     }
   }
 
-  build() {
-    if (this.isVisible) {
-      Text(this.message)
-        .fontSize(14)
-        .fontColor('#FFFFFF')
-        .backgroundColor('#00000080')
-        .borderRadius(20)
-        .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-        .position({ x: '50%', y: '80%' })
-        .translate({ x: -50, y: -50 })
-        .zIndex(9999)
-        .animation({
-          duration: 300,
-          curve: Curve.EaseInOut
-        })
-    }
+  /**
+   * 显示成功消息
+   * @param message 要显示的消息
+   */
+  showSuccess(message: string): void {
+    this.show(`✅ ${message}`, 2000);
+  }
+
+  /**
+   * 显示错误消息
+   * @param message 要显示的消息
+   */
+  showError(message: string): void {
+    this.show(`❌ ${message}`, 3000);
+  }
+
+  /**
+   * 显示警告消息
+   * @param message 要显示的消息
+   */
+  showWarning(message: string): void {
+    this.show(`⚠️ ${message}`, 2500);
+  }
+
+  /**
+   * 显示信息消息
+   * @param message 要显示的消息
+   */
+  showInfo(message: string): void {
+    this.show(`ℹ️ ${message}`, 2000);
   }
 }
