@@ -56,7 +56,7 @@ export struct OrderStatusView {
       
       // 待评价
       Column() {
-        Image($r('app.media.pending_delivery'))
+        Image($r('app.media.pending_review'))
           .width(40)
           .height(40)
         Text('待评价')

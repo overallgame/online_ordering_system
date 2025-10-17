@@ -24,7 +24,7 @@ export struct UserDetailPage {
     const currentUser = this.userViewModel.user;
     if (currentUser) {
       // 由于UserViewModel现在使用监听器，这里只需要更新editUser
-      this.editUser = this.copyUser(currentUser);
+      this.editUser = this.userViewModel.copyUser(currentUser);
     } else {
       console.warn('当前没有登录用户');
       // 可以在这里添加跳转到登录页面的逻辑
@@ -81,7 +81,6 @@ export struct UserDetailPage {
           .fontColor('#007AFF')
           .onClick(() => {
             this.startEdit();
-
           })
       }
     }
@@ -151,6 +150,7 @@ export struct UserDetailPage {
     .borderRadius(12)
     .shadow({ radius: 4, color: '#00000010', offsetX: 0, offsetY: 2 })
   }
+
 
   @Builder
   buildBasicInfoSection() {
@@ -306,19 +306,24 @@ export struct UserDetailPage {
     }
     
     this.isEditing = true;
-    this.editUser = this.copyUser(this.userViewModel.user);
+    this.editUser = this.userViewModel.copyUser(this.userViewModel.user);
   }
 
 
   async saveUserInfo() {
     try {
-      // 直接通过AppDataManager保存用户信息
-      // 这会自动触发监听器更新UserViewModel
-      console.error(this.userViewModel.user?.username);
-      await AppDataManager.getInstance().setCurrentUser(this.editUser);
-      this.isEditing = false;
-      // 显示成功提示
-      //this.showToast('保存成功');
+      // 显示保存中状态
+      this.showToast('正在保存...');
+      
+      // 使用UserViewModel的updateUserProfile方法，这会同时更新本地和同步到后端
+      const success = await this.userViewModel.updateUserProfile(this.editUser);
+      
+      if (success) {
+        this.isEditing = false;
+        this.showToast('保存成功');
+      } else {
+        this.showToast('保存失败，请重试');
+      }
     } catch (error) {
       console.error('保存用户信息失败:', error);
       this.showToast('保存失败，请重试');
@@ -338,28 +343,10 @@ export struct UserDetailPage {
   }
 
   showToast(message: string) {
-    //this.toastComponent.show(message);
+    ToastComponent.getInstance().show(message);
   }
 
+
   // 复制用户对象的方法
-  private copyUser(user: User): User {
-    if (!user) {
-      console.error('copyUser: 用户对象为空');
-      return new User();
-    }
-    
-    const newUser = new User();
-    newUser.userId = user.userId || '';
-    newUser.username = user.username || '';
-    newUser.phone = user.phone || '';
-    newUser.email = user.email || '';
-    newUser.avatar = user.avatar;
-    newUser.address = user.address || '';
-    newUser.createTime = user.createTime || 0;
-    newUser.isLoggedIn = user.isLoggedIn || false;
-    newUser.token = user.token;
-    newUser.lastLoginTime = user.lastLoginTime || 0;
-    newUser.preferences = user.preferences || new UserPreferences();
-    return newUser;
-  }
+
 }
