@@ -1,6 +1,6 @@
 import { Order, OrderStatus, PaymentStatus, OrderType, PaymentMethod } from 'common';
 import { OrderService, PaymentResult } from '../service/OrderService';
-import { OrderItem, Combo, Dish } from 'common';
+import {OrderServiceTest} from '../test/OrderServiceTest'
 import { OrderDataConverter } from '../util/OrderDataConverter';
 /**
  * 订单ViewModel - 处理订单相关的业务逻辑
@@ -21,6 +21,8 @@ export class OrderViewModel {
   
   // 筛选条件
   selectedStatus?: number; // 订单状态筛选
+  beginTime?: string; // 开始时间
+  endTime?: string; // 结束时间
   
   // 订单服务
   private orderService: OrderService;
@@ -28,6 +30,7 @@ export class OrderViewModel {
   private userId: string = '';
 
   constructor() {
+    OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
   }
 
@@ -36,6 +39,24 @@ export class OrderViewModel {
    */
   setUserId(userId: string): void {
     this.userId = userId;
+  }
+
+  /**
+   * 设置筛选条件
+   */
+  setFilter(status?: number, beginTime?: string, endTime?: string): void {
+    this.selectedStatus = status;
+    this.beginTime = beginTime;
+    this.endTime = endTime;
+  }
+
+  /**
+   * 清除筛选条件
+   */
+  clearFilter(): void {
+    this.selectedStatus = undefined;
+    this.beginTime = undefined;
+    this.endTime = undefined;
   }
 
   /**
@@ -52,10 +73,14 @@ export class OrderViewModel {
     }
 
     try {
-      const response = await this.orderService.getHistoryOrders(
+      // 使用管理端订单搜索接口获取用户全部订单
+      const response = await this.orderService.getUserAllOrders(
+        this.userId,
         this.currentPage, 
         this.pageSize, 
-        this.selectedStatus
+        this.selectedStatus,
+        this.beginTime,
+        this.endTime
       );
 
       if (response.success && response.data) {

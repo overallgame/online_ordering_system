@@ -49,6 +49,20 @@ export interface ApiOrderListResponse {
 }
 
 /**
+ * 管理端订单搜索接口响应数据结构
+ */
+export interface AdminOrderSearchData {
+  total: number;
+  records: ApiOrder[];
+}
+
+export interface AdminOrderSearchResponse {
+  code: number;
+  msg: string | null;
+  data: AdminOrderSearchData;
+}
+
+/**
  * 订单数据转换器
  */
 export class OrderDataConverter {
@@ -149,6 +163,26 @@ export class OrderDataConverter {
    */
   static convertOrderList(apiResponse: ApiOrderListResponse): Order[] {
     return apiResponse.records.map(order => OrderDataConverter.convertOrder(order));
+  }
+
+  /**
+   * 将管理端订单搜索接口响应转换为应用订单列表
+   */
+  static convertAdminOrderSearchResponse(apiResponse: AdminOrderSearchResponse): Order[] {
+    if (apiResponse.code === 1 && apiResponse.data) {
+      return apiResponse.data.records.map(order => OrderDataConverter.convertOrder(order));
+    }
+    return [];
+  }
+
+  /**
+   * 从管理端订单搜索接口响应中获取总数
+   */
+  static getTotalFromAdminResponse(apiResponse: AdminOrderSearchResponse): number {
+    if (apiResponse.code === 1 && apiResponse.data) {
+      return apiResponse.data.total;
+    }
+    return 0;
   }
 
   /**

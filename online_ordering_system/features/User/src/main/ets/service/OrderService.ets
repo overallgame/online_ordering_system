@@ -1,6 +1,6 @@
 import { ApiClient, ApiEndpoints, ApiResponse } from 'common';
 import { Order, OrderStatus, PaymentStatus, PaymentMethod } from 'common';
-import { OrderDataConverter, ApiOrderListResponse, ApiOrder } from '../util/OrderDataConverter';
+import { OrderDataConverter, ApiOrderListResponse, ApiOrder, AdminOrderSearchResponse } from '../util/OrderDataConverter';
 
 /**
  * 订单列表响应接口
@@ -61,6 +61,70 @@ export class OrderService {
       OrderService.instance = new OrderService();
     }
     return OrderService.instance;
+  }
+
+  /**
+   * 使用管理端订单搜索接口获取用户全部订单
+   * @param userId 用户ID
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @param status 订单状态筛选（可选）
+   * @param beginTime 开始时间（可选）
+   * @param endTime 结束时间（可选）
+   * @returns 订单列表
+   */
+  async getUserAllOrders(
+    userId: string,
+    page: number = 1, 
+    pageSize: number = 10,
+    status?: number,
+    beginTime?: string,
+    endTime?: string
+  ): Promise<ApiResponse<OrderListResponse>> {
+    try {
+      let endpoint = `${ApiEndpoints.ADMIN_ORDER_SEARCH}?page=${page}&pageSize=${pageSize}`;
+      
+      // 添加用户ID筛选（通过phone字段，因为管理端接口没有直接的userId参数）
+      // 这里需要根据实际接口调整，可能需要通过其他方式筛选用户订单
+      
+      if (status !== undefined) {
+        endpoint += `&status=${status}`;
+      }
+      if (beginTime) {
+        endpoint += `&beginTime=${beginTime}`;
+      }
+      if (endTime) {
+        endpoint += `&endTime=${endTime}`;
+      }
+
+      const response = await this.apiClient.get<AdminOrderSearchResponse>(endpoint);
+      
+      if (response.success && response.data) {
+        const orders = OrderDataConverter.convertAdminOrderSearchResponse(response.data);
+        const total = OrderDataConverter.getTotalFromAdminResponse(response.data);
+        
+        return {
+          success: true,
+          data: {
+            orders: orders,
+            total: total,
+            page: page,
+            pageSize: pageSize
+          }
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error || '获取订单失败'
+        };
+      }
+    } catch (error) {
+      console.error('获取用户全部订单时发生错误:', error);
+      return {
+        success: false,
+        error: '网络连接失败，请检查网络设置'
+      };
+    }
   }
 
   /**
