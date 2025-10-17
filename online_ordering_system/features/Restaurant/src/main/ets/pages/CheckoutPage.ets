@@ -3,6 +3,7 @@ import { CartItem } from 'common';
 import { User } from 'common';
 import { AppDataManager } from 'common';
 import { OrderViewModel } from '../viewModel/OrderViewModel';
+import { CartViewModel } from '../viewModel/CartViewModel';
 import { PageName, PaymentSuccessParams } from '../util/NavigationTypes';
 import { TimePickerComponent } from '../view/TimePickerComponent';
 
@@ -25,6 +26,7 @@ export struct CheckoutPage {
   @State finalAmount: number = 0;
   private userListener?: (user: User | null) => void;
   private orderViewModel: OrderViewModel = new OrderViewModel();
+  private cartViewModel: CartViewModel = new CartViewModel();
 
   aboutToAppear() {
     if (this.sourceProp !== undefined && this.cartItemsProp !== undefined) {
@@ -39,7 +41,23 @@ export struct CheckoutPage {
     }
     this.loadCurrentUser();
     this.initializeDeliveryTime();
-    this.calculateTotals();
+    this.loadCartData();
+  }
+
+  // 加载购物车数据
+  private async loadCartData(): Promise<void> {
+    try {
+      // 设置购物车监听器
+      this.cartViewModel.addListener((cart) => {
+        this.cartItems = cart.items;
+        this.calculateTotals();
+      });
+      
+      // 加载购物车数据
+      await this.cartViewModel.loadCart();
+    } catch (error) {
+      console.error('Failed to load cart data:', error);
+    }
   }
 
   // 加载当前用户信息
@@ -532,5 +550,6 @@ export struct CheckoutPage {
       const appDataManager = AppDataManager.getInstance();
       appDataManager.removeUserListener(this.userListener);
     }
+    this.cartViewModel.destroy();
   }
 }

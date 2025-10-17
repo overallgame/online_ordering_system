@@ -1,3 +1,4 @@
+import { promptAction } from '@kit.ArkUI';
 import { Dish, CartItem, Category } from 'common';
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
@@ -30,6 +31,8 @@ export struct OnlineOrderPage {
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
   // 结算页状态
   @State showCheckout: boolean = false;
+  // 购物车操作状态
+  @State isCartLoading: boolean = false;
 
   aboutToAppear() {
     this.breakpointSystem.register();
@@ -39,6 +42,7 @@ export struct OnlineOrderPage {
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
+    this.cartViewModel.destroy();
   }
 
   private async loadCategories() {
@@ -132,17 +136,39 @@ export struct OnlineOrderPage {
   private async addToCart(dish: Dish): Promise<void> {
     if (!dish || !dish.dishId) {
       console.error('Invalid dish provided to addToCart');
+      promptAction.showToast({
+        message: '商品信息错误',
+        duration: 2000
+      });
       return;
     }
     
+    if (this.isCartLoading) {
+      return; // 防止重复操作
+    }
+    
+    this.isCartLoading = true;
     try {
       const success = await this.cartViewModel.addItem(dish, undefined, 1);
-      if (!success) {
-        console.error('Failed to add dish to cart');
-        // 可以在这里显示用户提示
+      if (success) {
+        promptAction.showToast({
+          message: '已添加到购物车',
+          duration: 1500
+        });
+      } else {
+        promptAction.showToast({
+          message: '添加失败，请重试',
+          duration: 2000
+        });
       }
     } catch (error) {
       console.error('Error adding dish to cart:', error);
+      promptAction.showToast({
+        message: '网络错误，请检查网络连接',
+        duration: 2000
+      });
+    } finally {
+      this.isCartLoading = false;
     }
   }
 
@@ -150,16 +176,34 @@ export struct OnlineOrderPage {
   private async updateCartQuantity(itemId: string, quantity: number): Promise<void> {
     if (!itemId || quantity < 0) {
       console.error('Invalid parameters for updateCartQuantity');
+      promptAction.showToast({
+        message: '参数错误',
+        duration: 2000
+      });
       return;
     }
     
+    if (this.isCartLoading) {
+      return; // 防止重复操作
+    }
+    
+    this.isCartLoading = true;
     try {
       const success = await this.cartViewModel.updateItemQuantity(itemId, quantity);
       if (!success) {
-        console.error('Failed to update item quantity');
+        promptAction.showToast({
+          message: '更新失败，请重试',
+          duration: 2000
+        });
       }
     } catch (error) {
       console.error('Error updating item quantity:', error);
+      promptAction.showToast({
+        message: '网络错误，请检查网络连接',
+        duration: 2000
+      });
+    } finally {
+      this.isCartLoading = false;
     }
   }
 

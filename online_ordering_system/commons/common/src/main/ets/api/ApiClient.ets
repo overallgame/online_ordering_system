@@ -1,8 +1,10 @@
 import http from '@ohos.net.http';
+import { AppDataManager } from '../manager/AppDataManager';
 
 export class ApiClient {
   private static instance: ApiClient;
   private baseURL: string = 'http://117.72.48.167:9848';
+  private appDataManager: AppDataManager = AppDataManager.getInstance();
 
   public static getInstance(): ApiClient {
     if (!ApiClient.instance) {
@@ -14,17 +16,28 @@ export class ApiClient {
   async request<T>(
     method: http.RequestMethod,
     endpoint: string,
-    data?: object
+    data?: object,
+    useToken: boolean = true
   ): Promise<ApiResponse<T>> {
     try {
       const url = `${this.baseURL}${endpoint}`;
       const httpRequest = http.createHttp();
 
+      // 构建请求头
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (useToken && this.appDataManager.isLoggedIn()) {
+        const token = this.appDataManager.getToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const options: http.HttpRequestOptions = {
         method: method,
-        header: {
-          'Content-Type': 'application/json',
-        },
+        header: headers,
         readTimeout: 15000,
         connectTimeout: 15000
       };
@@ -34,6 +47,17 @@ export class ApiClient {
       }
 
       const response = await httpRequest.request(url, options);
+
+      // 处理401未授权响应
+      if (response.responseCode === 401) {
+        // Token过期，清除用户登录状态
+        await this.appDataManager.logout();
+        return {
+          success: false,
+          error: '登录已过期，请重新登录',
+          code: response.responseCode
+        };
+      }
 
       if (response.responseCode === 200) {
         let result: T;
@@ -64,21 +88,21 @@ export class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(http.RequestMethod.GET, endpoint);
+  async get<T>(endpoint: string, useToken: boolean = true): Promise<ApiResponse<T>> {
+    return this.request<T>(http.RequestMethod.GET, endpoint, undefined, useToken);
   }
 
-  async post<T>(endpoint: string, data: object): Promise<ApiResponse<T>> {
-    return this.request<T>(http.RequestMethod.POST, endpoint, data);
+  async post<T>(endpoint: string, data: object, useToken: boolean = true): Promise<ApiResponse<T>> {
+    return this.request<T>(http.RequestMethod.POST, endpoint, data, useToken);
   }
 
-  async put<T>(endpoint: string, data: object): Promise<ApiResponse<T>> {
-    return this.request<T>(http.RequestMethod.PUT, endpoint, data);
+  async put<T>(endpoint: string, data: object, useToken: boolean = true): Promise<ApiResponse<T>> {
+    return this.request<T>(http.RequestMethod.PUT, endpoint, data, useToken);
   }
 
   // 添加 DELETE 方法
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(http.RequestMethod.DELETE, endpoint);
+  async delete<T>(endpoint: string, useToken: boolean = true): Promise<ApiResponse<T>> {
+    return this.request<T>(http.RequestMethod.DELETE, endpoint, undefined, useToken);
   }
 
   private getErrorMessage(code: number): string {
@@ -115,6 +139,12 @@ export class ApiEndpoints {
   // 套餐相关接口
   static readonly SETMEAL_LIST = '/user/setmeal/list';
   static readonly SETMEAL_DISH_LIST = '/user/setmeal/dish';
+
+  // 购物车相关API
+  static readonly CART_LIST = '/user/shoppingCart/list';           // 查看购物车
+  static readonly CART_ADD = '/user/shoppingCart/add';             // 添加购物车
+  static readonly CART_REMOVE = '/user/shoppingCart/sub';          // 删除购物车中一个商品
+  static readonly CART_CLEAR = '/user/shoppingCart/clean';         // 清空购物车
 
   // 订单相关API - 根据苍穹外卖接口文档
   static readonly HISTORY_ORDERS = '/user/order/historyOrders';  // 历史订单查询
