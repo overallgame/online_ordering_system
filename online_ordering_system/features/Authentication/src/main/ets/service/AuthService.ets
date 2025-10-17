@@ -21,23 +21,20 @@ export class AuthService {
         password: loginRequest.password
       };
 
-      // 调用网络请求
       const response: ApiResponse<LoginApiResponse> = await this.apiClient.post(
         ApiEndpoints.LOGIN,
-        requestBody
+        requestBody,
+        false
       );
 
       if (response.success && response.data) {
         const apiResult = response.data;
-        
-        // 检查API返回的业务状态码
+
         if (apiResult.code === 1) {
-          // 创建用户对象
           const user = this.createUserFromLoginVO(apiResult.data);
           user.isLoggedIn = true;
           user.lastLoginTime = Date.now();
 
-          // 保存到全局状态
           await this.appDataManager.setCurrentUser(user);
 
           return {
@@ -84,13 +81,13 @@ export class AuthService {
 
       const response: ApiResponse<RegisterApiResponse> = await this.apiClient.post(
         ApiEndpoints.REGISTER,
-        requestBody
+        requestBody,
+        false
       );
 
       if (response.success && response.data) {
         const apiResult = response.data;
-        
-        // 检查API返回的业务状态码
+
         if (apiResult.code === 1) {
           return {
             success: true,

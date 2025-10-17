@@ -5,6 +5,9 @@ export class CartViewModel {
   private cart: Cart;
   private repository: CartRepository;
   private listeners: Array<(cart: Cart) => void> = [];
+  private autoSaveTimer?: number;
+  private isLoading: boolean = false;
+  private error?: string = undefined;
   
   constructor(userId: string = '', restaurantId: string = '') {
     this.cart = new Cart(userId, restaurantId);
@@ -64,9 +67,19 @@ export class CartViewModel {
     return this.cart.finalAmount;
   }
   
-  // 检查购物车是否为空
-  isEmpty(): boolean {
-    return this.cart.isEmpty;
+  // 获取加载状态
+  getIsLoading(): boolean {
+    return this.isLoading;
+  }
+  
+  // 获取错误信息
+  getError(): string | undefined {
+    return this.error;
+  }
+  
+  // 清除错误
+  clearError(): void {
+    this.error = undefined;
   }
   
   // 添加商品到购物车
@@ -74,34 +87,43 @@ export class CartViewModel {
     try {
       // 参数验证
       if (!dish && !combo) {
+        this.error = 'Either dish or combo must be provided';
         console.error('Either dish or combo must be provided');
         return false;
       }
       
       if (quantity <= 0) {
+        this.error = 'Quantity must be greater than 0';
         console.error('Quantity must be greater than 0');
         return false;
       }
       
-      const cartItem = new CartItem(dish, combo, quantity);
-      if (note) {
-        cartItem.note = note;
+      this.isLoading = true;
+      this.error = undefined;
+      
+      // 调用网络API添加商品
+      const success = await this.repository.addToCart(
+        dish?.dishId ? parseInt(dish.dishId) : undefined,
+        combo?.comboId ? parseInt(combo.comboId) : undefined,
+        note
+      );
+      
+      if (success) {
+        // 重新加载购物车数据
+        await this.loadCart();
+        console.log('Item added to cart:', dish?.name || combo?.name);
+        return true;
+      } else {
+        this.error = 'Failed to add item to cart via API';
+        console.error('Failed to add item to cart via API');
+        return false;
       }
-      
-      this.cart.addItem(cartItem);
-      this.notifyListeners();
-      
-      // 保存到本地存储
-      const saveSuccess = await this.repository.saveCart(this.cart);
-      if (!saveSuccess) {
-        console.warn('Failed to save cart to local storage');
-      }
-      
-      console.log('Item added to cart:', cartItem.name);
-      return true;
     } catch (error) {
+      this.error = 'Network error occurred';
       console.error('Failed to add item to cart:', error);
       return false;
+    } finally {
+      this.isLoading = false;
     }
   }
   
@@ -119,17 +141,30 @@ export class CartViewModel {
         return false;
       }
       
-      this.cart.updateItemQuantity(itemId, quantity);
-      this.notifyListeners();
-      
-      // 保存到本地存储
-      const saveSuccess = await this.repository.saveCart(this.cart);
-      if (!saveSuccess) {
-        console.warn('Failed to save cart to local storage');
+      // 找到对应的商品项
+      const cartItem = this.cart.items.find(item => item.id === itemId);
+      if (!cartItem) {
+        console.error('Cart item not found:', itemId);
+        return false;
       }
       
-      console.log('Item quantity updated:', itemId, quantity);
-      return true;
+      // 调用网络API更新数量
+      const success = await this.repository.updateItemQuantity(
+        quantity,
+        cartItem.dish?.dishId ? parseInt(cartItem.dish.dishId) : undefined,
+        cartItem.combo?.comboId ? parseInt(cartItem.combo.comboId) : undefined,
+        cartItem.note
+      );
+      
+      if (success) {
+        // 重新加载购物车数据
+        await this.loadCart();
+        console.log('Item quantity updated:', itemId, quantity);
+        return true;
+      } else {
+        console.error('Failed to update item quantity via API');
+        return false;
+      }
     } catch (error) {
       console.error('Failed to update item quantity:', error);
       return false;
@@ -139,14 +174,29 @@ export class CartViewModel {
   // 移除商品
   async removeItem(itemId: string): Promise<boolean> {
     try {
-      this.cart.removeItem(itemId);
-      this.notifyListeners();
+      // 找到对应的商品项
+      const cartItem = this.cart.items.find(item => item.id === itemId);
+      if (!cartItem) {
+        console.error('Cart item not found:', itemId);
+        return false;
+      }
       
-      // 保存到本地存储
-      await this.repository.saveCart(this.cart);
+      // 调用网络API删除商品
+      const success = await this.repository.removeFromCart(
+        cartItem.dish?.dishId ? parseInt(cartItem.dish.dishId) : undefined,
+        cartItem.combo?.comboId ? parseInt(cartItem.combo.comboId) : undefined,
+        cartItem.note
+      );
       
-      console.log('Item removed from cart:', itemId);
-      return true;
+      if (success) {
+        // 重新加载购物车数据
+        await this.loadCart();
+        console.log('Item removed from cart:', itemId);
+        return true;
+      } else {
+        console.error('Failed to remove item from cart via API');
+        return false;
+      }
     } catch (error) {
       console.error('Failed to remove item from cart:', error);
       return false;
@@ -156,14 +206,18 @@ export class CartViewModel {
   // 清空购物车
   async clearCart(): Promise<boolean> {
     try {
-      this.cart.clear();
-      this.notifyListeners();
+      // 调用网络API清空购物车
+      const success = await this.repository.clearCart();
       
-      // 清空本地存储
-      await this.repository.clearCart();
-      
-      console.log('Cart cleared');
-      return true;
+      if (success) {
+        this.cart.clear();
+        this.notifyListeners();
+        console.log('Cart cleared');
+        return true;
+      } else {
+        console.error('Failed to clear cart via API');
+        return false;
+      }
     } catch (error) {
       console.error('Failed to clear cart:', error);
       return false;
@@ -173,113 +227,52 @@ export class CartViewModel {
   // 加载购物车
   async loadCart(): Promise<boolean> {
     try {
-      const savedCart = await this.repository.loadCart();
-      if (savedCart) {
-        this.cart = savedCart;
+      // 从网络API加载购物车
+      const networkCart = await this.repository.getCartList();
+      
+      if (networkCart) {
+        this.cart = networkCart;
         this.notifyListeners();
-        console.log('Cart loaded from storage');
+        console.log('Cart loaded from network');
         return true;
+      } else {
+        console.warn('Failed to load cart from network');
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Failed to load cart:', error);
       return false;
     }
   }
   
-  // 同步购物车到后端
-  async syncCart(userId: string): Promise<boolean> {
-    try {
-      const syncedCart = await this.repository.syncCart(userId);
-      if (syncedCart) {
-        this.cart = syncedCart;
-        this.notifyListeners();
-        console.log('Cart synced with backend');
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Failed to sync cart:', error);
-      return false;
-    }
-  }
-  
-  // 保存购物车到后端
-  async saveCartToBackend(): Promise<boolean> {
-    try {
-      const success = await this.repository.saveCartToBackend(this.cart);
-      if (success) {
-        this.notifyListeners();
-        console.log('Cart saved to backend');
-      }
-      return success;
-    } catch (error) {
-      console.error('Failed to save cart to backend:', error);
-      return false;
-    }
-  }
-  
-  // 检查是否需要同步
-  async needsSync(): Promise<boolean> {
-    try {
-      return await this.repository.needsSync();
-    } catch (error) {
-      console.error('Failed to check sync status:', error);
-      return false;
-    }
-  }
-  
-  // 标记购物车为已支付
-  async markAsPaid(): Promise<boolean> {
-    try {
-      this.cart.markAsPaid();
-      
-      // 保存到历史记录
-      await this.repository.saveCartHistory(this.cart);
-      
-      // 清空当前购物车
-      await this.clearCart();
-      
-      console.log('Cart marked as paid');
-      return true;
-    } catch (error) {
-      console.error('Failed to mark cart as paid:', error);
-      return false;
-    }
-  }
-  
-  // 设置用户ID
-  setUserId(userId: string): void {
-    this.cart.userId = userId;
-  }
-  
-  // 设置餐厅ID
-  setRestaurantId(restaurantId: string): void {
-    this.cart.restaurantId = restaurantId;
-  }
-  
-  // 获取购物车历史记录
-  async getCartHistory(): Promise<Cart[]> {
-    try {
-      return await this.repository.getCartHistory();
-    } catch (error) {
-      console.error('Failed to get cart history:', error);
-      return [];
-    }
-  }
-  
   // 自动保存购物车（定时保存）
   startAutoSave(intervalMs: number = 30000): void {
-    setInterval(async () => {
+    // 停止之前的定时器
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer);
+    }
+    
+    // 启动新的定时器
+    this.autoSaveTimer = setInterval(async () => {
       if (!this.cart.isEmpty && !this.cart.isPaid) {
-        await this.repository.saveCart(this.cart);
-        console.log('Cart auto-saved');
+        // 从网络重新加载购物车数据，确保数据同步
+        await this.loadCart();
+        console.log('Cart auto-synced');
       }
     }, intervalMs);
   }
   
+  // 停止自动保存
+  stopAutoSave(): void {
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer);
+      this.autoSaveTimer = undefined;
+    }
+  }
+  
   // 销毁ViewModel
   destroy(): void {
+    this.stopAutoSave();
     this.listeners = [];
   }
 }
