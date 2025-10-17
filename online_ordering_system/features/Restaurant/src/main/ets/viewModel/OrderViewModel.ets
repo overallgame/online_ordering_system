@@ -1,6 +1,4 @@
-import { Order, OrderItem, OrderStatus, OrderType, PaymentStatus } from 'common';
-import { CartItem } from '../viewModel/CartViewModel';
-
+import { CartItem, Order, OrderItem, OrderStatus, OrderType, PaymentStatus } from 'common';
 // 订单状态枚举
 export enum OrderState {
   IDLE = 'idle',

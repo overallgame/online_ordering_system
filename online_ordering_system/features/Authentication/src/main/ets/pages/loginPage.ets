@@ -1,9 +1,8 @@
 import { AuthService, LoginRequest, AuthResponse } from '../service/AuthService';
-import { router } from '@kit.ArkUI';
 
-@Entry
 @Component
-struct LoginPage {
+export struct LoginPage {
+  @Consume('mainPathStack') mainPathStack: NavPathStack;
   private authService: AuthService = new AuthService();
   @State loginRequest: LoginRequest = new LoginRequest();
   @State isLoading: boolean = false;
@@ -11,16 +10,14 @@ struct LoginPage {
 
   build() {
     Column() {
-      // 头部标题
       Text('欢迎登录')
         .fontSize(30)
         .fontWeight(FontWeight.Bold)
         .margin({ top: 80, bottom: 50 })
 
-      // 账号输入框
       TextInput({
         placeholder: '请输入用户名或手机号',
-        text: this.loginRequest.username
+        text: this.loginRequest.account
       })
         .width('90%')
         .height(50)
@@ -28,12 +25,11 @@ struct LoginPage {
         .borderRadius(10)
         .backgroundColor(Color.White)
         .onChange((value: string) => {
-          this.loginRequest.username = value;
-          this.errorMessage = ''; // 清除错误信息
+          this.loginRequest.account = value;
+          this.errorMessage = '';
         })
         .margin({ bottom: 20 })
 
-      // 密码输入框
       TextInput({
         placeholder: '请输入密码',
         text: this.loginRequest.password
@@ -46,11 +42,10 @@ struct LoginPage {
         .type(InputType.Password)
         .onChange((value: string) => {
           this.loginRequest.password = value;
-          this.errorMessage = ''; // 清除错误信息
+          this.errorMessage = '';
         })
         .margin({ bottom: 20 })
 
-      // 错误信息显示
       if (this.errorMessage) {
         Text(this.errorMessage)
           .fontSize(14)
@@ -60,7 +55,6 @@ struct LoginPage {
           .margin({ bottom: 10 })
       }
 
-      // 登录按钮
       Button('登录', { type: ButtonType.Capsule, stateEffect: true })
         .width('90%')
         .height(50)
@@ -73,7 +67,6 @@ struct LoginPage {
         })
         .margin({ bottom: 20 })
 
-      // 加载状态
       if (this.isLoading) {
         LoadingProgress()
           .width(30)
@@ -81,7 +74,6 @@ struct LoginPage {
           .margin({ bottom: 20 })
       }
 
-      // 注册链接
       Row() {
         Text('还没有账号？')
           .fontSize(14)
@@ -90,12 +82,11 @@ struct LoginPage {
           .fontSize(14)
           .fontColor('#007AFF')
           .onClick(() => {
-            router.pushUrl({ url: 'pages/RegisterPage' });
+            this.mainPathStack.pushPathByName('register', null);
           })
       }
       .margin({ top: 30 })
 
-      // 填充剩余空间
       Blank()
 
     }
@@ -114,8 +105,7 @@ struct LoginPage {
       const response: AuthResponse = await this.authService.login(this.loginRequest);
 
       if (response.success) {
-        // 登录成功，跳转到首页
-        router.replaceUrl({ url: 'pages/HomePage' });
+        this.mainPathStack.pop();
       } else {
         this.errorMessage = response.message;
       }
@@ -126,5 +116,4 @@ struct LoginPage {
       this.isLoading = false;
     }
   }
-
 }

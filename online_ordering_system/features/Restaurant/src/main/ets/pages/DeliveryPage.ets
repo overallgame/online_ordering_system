@@ -1,23 +1,25 @@
-import { Dish } from 'common';
+import { Dish, CartItem, Category } from 'common';
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { DishViewModel } from '../viewModel/DishViewModel';
-import { CartViewModel, CartItem } from '../viewModel/CartViewModel';
+import { CartViewModel } from '../viewModel/CartViewModel';
 import { LoadStatus } from '../util/DataState';
-import { PageName, DishDetailParams, CheckoutParams } from '../util/NavigationTypes';
+import { PageName } from '../util/NavigationTypes';
+import { CheckoutPage } from './CheckoutPage';
+import { CategoryTabsComponent } from '../view/CategoryTabsComponent';
 
 @Component
 export struct DeliveryPage {
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   private viewModel: DishViewModel = new DishViewModel();
+  @State categories: Category[] = [];
+  @State selectedCategory: Category | null = null;
   private cartViewModel: CartViewModel = new CartViewModel();
   @State dishes: Dish[] = [];
   @State allDishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
   @State error?: string = undefined;
   @State isRefreshing: boolean = false;
-  @State isLoadingMore: boolean = false;
-  @State hasMore: boolean = false;
   @State searchText: string = '';
   // 购物车状态
   @State cartItems: CartItem[] = [];
@@ -26,62 +28,97 @@ export struct DeliveryPage {
   @State dishQuantities: Map<string, number> = new Map();
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
+  // 结算页状态
+  @State showCheckout: boolean = false;
 
   aboutToAppear() {
     this.breakpointSystem.register();
-    this.loadInitial();
+    this.loadCategories();
+    this.initializeCart();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
   }
 
+  private async loadCategories() {
+    this.categories = await this.viewModel.loadCategories(1);
+    if (this.categories.length > 0) {
+      this.selectedCategory = this.categories[0];
+      await this.loadInitial();
+    }
+  }
+
   private async loadInitial() {
     this.status = LoadStatus.Loading;
     this.error = undefined;
-    await this.viewModel.loadInitial();
+
+    if (this.selectedCategory) {
+      await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    } else {
+      await this.viewModel.loadDishesByCategoryId(101);
+    }
+
     this.allDishes = this.viewModel.state.data;
     this.dishes = this.allDishes;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
-    this.hasMore = this.viewModel.hasMore;
   }
 
   private async onRefresh() {
     this.isRefreshing = true;
-    await this.viewModel.refresh();
+
+    if (this.selectedCategory) {
+      await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    } else {
+      await this.viewModel.loadDishesByCategoryId(101);
+    }
+
     this.allDishes = this.viewModel.state.data;
     this.dishes = this.allDishes;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
-    this.hasMore = this.viewModel.hasMore;
     this.isRefreshing = false;
     if (this.searchText.trim()) {
       this.filterDishes();
     }
   }
 
-  private async onLoadMore() {
-    if (this.isLoadingMore || !this.hasMore) {
-      return;
-    }
-    this.isLoadingMore = true;
-    await this.viewModel.loadMore();
-    this.allDishes = this.viewModel.state.data;
-    this.hasMore = this.viewModel.hasMore;
-    this.isLoadingMore = false;
-    if (this.searchText.trim()) {
-      this.filterDishes();
-    } else {
-      this.dishes = this.allDishes;
-    }
-  }
-
-  private onSearch() {
-    if (this.searchText.trim()) {
-      this.filterDishes();
-    } else {
-      this.dishes = this.allDishes;
+  // 初始化购物车
+  private async initializeCart() {
+    try {
+      // 设置购物车监听器
+      this.cartViewModel.addListener((cart) => {
+        this.cartItems = cart.items || [];
+        this.cartTotalQuantity = cart.totalQuantity || 0;
+        this.cartTotalAmount = cart.finalAmount || 0;
+        
+        // 更新dishQuantities映射
+        const newQuantities = new Map<string, number>();
+        this.cartItems.forEach((item: CartItem) => {
+          if (item.dish && item.dish.dishId) {
+            newQuantities.set(item.dish.dishId, item.quantity);
+          }
+        });
+        this.dishQuantities = newQuantities;
+      });
+      
+      // 加载购物车数据
+      const loadSuccess = await this.cartViewModel.loadCart();
+      if (!loadSuccess) {
+        console.warn('Failed to load cart, using empty cart');
+      }
+      
+      // 启动自动保存
+      this.cartViewModel.startAutoSave();
+      
+      console.log('Cart initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize cart:', error);
+      // 确保购物车状态正确初始化
+      this.cartItems = [];
+      this.cartTotalQuantity = 0;
+      this.cartTotalAmount = 0;
     }
   }
 
@@ -95,49 +132,77 @@ export struct DeliveryPage {
     );
   }
 
-  // 同步购物车状态
-  private syncCartState(): void {
-    this.cartItems = this.cartViewModel.items;
-    this.cartTotalQuantity = this.cartViewModel.totalQuantity;
-    this.cartTotalAmount = this.cartViewModel.totalAmount;
-    
-    // 同步每个菜品的数量
-    const newQuantities = new Map<string, number>();
-    this.cartItems.forEach(item => {
-      if (item.dish && item.dish.dishId) {
-        newQuantities.set(item.dish.dishId, item.quantity);
-      }
-    });
-    this.dishQuantities = newQuantities;
-  }
-
   // 添加菜品到购物车
-  private addToCart(dish: Dish): void {
-    this.cartViewModel.addDishToCart(dish);
-    this.syncCartState();
+  private async addToCart(dish: Dish): Promise<void> {
+    if (!dish || !dish.dishId) {
+      console.error('Invalid dish provided to addToCart');
+      return;
+    }
+    
+    try {
+      const success = await this.cartViewModel.addItem(dish, undefined, 1);
+      if (!success) {
+        console.error('Failed to add dish to cart');
+        // 可以在这里显示用户提示
+      }
+    } catch (error) {
+      console.error('Error adding dish to cart:', error);
+    }
   }
 
   // 更新菜品数量
-  private updateCartQuantity(dishId: string, quantity: number): void {
-    this.cartViewModel.updateDishQuantity(dishId, quantity);
-    this.syncCartState();
+  private async updateCartQuantity(itemId: string, quantity: number): Promise<void> {
+    if (!itemId || quantity < 0) {
+      console.error('Invalid parameters for updateCartQuantity');
+      return;
+    }
+    
+    try {
+      const success = await this.cartViewModel.updateItemQuantity(itemId, quantity);
+      if (!success) {
+        console.error('Failed to update item quantity');
+      }
+    } catch (error) {
+      console.error('Error updating item quantity:', error);
+    }
   }
+
+  private onSearch() {
+    if (this.searchText.trim()) {
+      this.filterDishes();
+    } else {
+      this.dishes = this.allDishes;
+    }
+  }
+
 
   build() {
     NavDestination() {
-      Column() {
-      // 第一部分：顶部标题栏
-      this.buildHeader()
+      Stack() {
+        Column() {
+          // 第一部分：顶部标题栏
+          this.buildHeader()
 
-      // 第二部分：菜品列表
-      this.buildDishList()
+          // 第二部分：分类栏
+          this.buildCategoryTabs()
 
-      // 第三部分：悬浮购物车栏
-      this.buildFloatingCart()
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('linear-gradient(180deg, #E8F5E8 0%, #F8F9FA 100%)')
+          // 第三部分：菜品列表
+          this.buildDishList()
+
+          // 第四部分：悬浮购物车栏
+          this.buildFloatingCart()
+        }
+        .width('100%')
+        .height('100%')
+        .backgroundColor('linear-gradient(180deg, #E8F5E8 0%, #F8F9FA 100%)')
+
+        // 结算页
+        if (this.showCheckout) {
+          this.buildCheckoutOverlay()
+        }
+      }
+      .width('100%')
+      .height('100%')
     }
     .hideTitleBar(true)
   }
@@ -215,7 +280,16 @@ export struct DeliveryPage {
     .backgroundColor(Color.White)
   }
 
-  // 第二部分：菜品列表
+  // 第二部分：分类栏
+  @Builder
+  buildCategoryTabs() {
+    CategoryTabsComponent({
+      categories: this.categories,
+      selectedCategory: $selectedCategory
+    })
+  }
+
+  // 第三部分：菜品列表
   @Builder
   buildDishList() {
     Column() {
@@ -270,21 +344,6 @@ export struct DeliveryPage {
         .height('100%')
         .layoutWeight(1)
         .padding({ top: 16 })
-
-        if (this.hasMore) {
-          Row() {
-            if (this.isLoadingMore) {
-              LoadingProgress().width(20).height(20)
-              Text(' 正在加载更多...').fontSize(12).fontColor('#666666')
-            } else {
-              Button('加载更多').onClick(() => this.onLoadMore())
-            }
-          }
-          .width('100%')
-          .height(56)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-        }
       }
     }
     .width('100%')
@@ -302,7 +361,7 @@ export struct DeliveryPage {
         .borderRadius(8)
         .margin({ right: 12 })
         .onClick(() => {
-          this.showDishDetail(dish);
+          this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, dish);
         })
 
       Column() {
@@ -387,7 +446,10 @@ export struct DeliveryPage {
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
                 const currentQuantity = this.dishQuantities.get(dish.dishId) || 0;
-                this.updateCartQuantity(dish.dishId, currentQuantity - 1);
+                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.dish?.dishId === dish.dishId);
+                if (cartItem) {
+                  this.updateCartQuantity(cartItem.id, currentQuantity - 1);
+                }
               })
 
               Text(`${this.dishQuantities.get(dish.dishId) || 0}`)
@@ -435,7 +497,7 @@ export struct DeliveryPage {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
       .onClick(() => {
-        this.showDishDetail(dish);
+        this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, dish);
       })
     }
     .width('92%')
@@ -444,15 +506,6 @@ export struct DeliveryPage {
     .margin({ left: 16, right: 16, bottom: 12 })
     .borderRadius(12)
     .shadow({ radius: 4, color: '#1A000000', offsetX: 0, offsetY: 2 })
-  }
-
-  // 显示菜品详情
-  private showDishDetail(dish: Dish): void {
-    const params: DishDetailParams = {
-      dishId: dish.dishId,
-      hideCart: false
-    };
-    this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, params);
   }
 
   // 第三部分：悬浮购物车栏
@@ -500,7 +553,7 @@ export struct DeliveryPage {
             .height(36)
             .fontWeight(FontWeight.Medium)
             .onClick(() => {
-              this.goToCheckout();
+              this.showCheckout = true;
             })
         }
         .width('100%')
@@ -553,13 +606,13 @@ export struct DeliveryPage {
     .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: -2 })
   }
 
-  // 去结算
-  private goToCheckout(): void {
-    const params: CheckoutParams = {
-      orderId: undefined,
-      source: 'delivery',
-      cartItems: this.cartViewModel.items
-    };
-    this.restaurantPathStack.pushPathByName(PageName.CHECKOUT, params);
+  // 结算页覆盖层
+  @Builder
+  buildCheckoutOverlay() {
+    CheckoutPage({
+      sourceProp: 'delivery',
+      cartItemsProp: this.cartViewModel.getItems(),
+      showCheckout: $showCheckout
+    })
   }
 }

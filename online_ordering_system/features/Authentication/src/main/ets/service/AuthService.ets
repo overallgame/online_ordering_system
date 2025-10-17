@@ -1,5 +1,5 @@
 import { ApiClient, ApiEndpoints, ApiResponse, AppDataManager, User, UserPreferences } from "common";
-import { AuthResponse, LoginRequest, LoginRequestBody, RegisterRequest, RegisterRequestBody } from "../model/Auth";
+import { AuthResponse, LoginRequest, LoginRequestBody, RegisterRequest, RegisterRequestBody, LoginApiResponse, UserLoginVO, RegisterApiResponse } from "../model/Auth";
 
 export class AuthService {
   private apiClient: ApiClient = ApiClient.getInstance();
@@ -17,31 +17,41 @@ export class AuthService {
 
     try {
       const requestBody: LoginRequestBody = {
-        username: loginRequest.username,
+        account: loginRequest.account,
         password: loginRequest.password
       };
 
       // 调用网络请求
-      const response: ApiResponse<AuthResponse> = await this.apiClient.post(
+      const response: ApiResponse<LoginApiResponse> = await this.apiClient.post(
         ApiEndpoints.LOGIN,
         requestBody
       );
 
       if (response.success && response.data) {
-        // 创建用户对象
-        const user = this.createUserFromResponse(response.data);
-        user.isLoggedIn = true;
-        user.lastLoginTime = Date.now();
+        const apiResult = response.data;
+        
+        // 检查API返回的业务状态码
+        if (apiResult.code === 1) {
+          // 创建用户对象
+          const user = this.createUserFromLoginVO(apiResult.data);
+          user.isLoggedIn = true;
+          user.lastLoginTime = Date.now();
 
-        // 保存到全局状态
-        await this.appDataManager.setCurrentUser(user);
+          // 保存到全局状态
+          await this.appDataManager.setCurrentUser(user);
 
-        return {
-          success: true,
-          message: '登录成功',
-          user: user,
-          token: response.data.token
-        };
+          return {
+            success: true,
+            message: apiResult.msg || '登录成功',
+            user: user,
+            token: apiResult.data.token
+          };
+        } else {
+          return {
+            success: false,
+            message: apiResult.msg || '登录失败'
+          };
+        }
       } else {
         return {
           success: false,
@@ -69,29 +79,29 @@ export class AuthService {
     try {
       const requestBody: RegisterRequestBody = {
         username: registerRequest.username,
-        phone: registerRequest.phone,
-        email: registerRequest.email,
         password: registerRequest.password
       };
 
-      const response: ApiResponse<AuthResponse> = await this.apiClient.post(
+      const response: ApiResponse<RegisterApiResponse> = await this.apiClient.post(
         ApiEndpoints.REGISTER,
         requestBody
       );
 
       if (response.success && response.data) {
-        const user = this.createUserFromResponse(response.data);
-        user.isLoggedIn = true;
-        user.lastLoginTime = Date.now();
-
-        await this.appDataManager.setCurrentUser(user);
-
-        return {
-          success: true,
-          message: '注册成功',
-          user: user,
-          token: response.data.token
-        };
+        const apiResult = response.data;
+        
+        // 检查API返回的业务状态码
+        if (apiResult.code === 1) {
+          return {
+            success: true,
+            message: apiResult.msg || '注册成功'
+          };
+        } else {
+          return {
+            success: false,
+            message: apiResult.msg || '注册失败'
+          };
+        }
       } else {
         return {
           success: false,
@@ -107,59 +117,18 @@ export class AuthService {
     }
   }
 
-  // async autoLogin(): Promise<boolean> {
-  //   try {
-  //     // 检查是否已有登录用户
-  //     if (this.appDataManager.isLoggedIn()) {
-  //       return true;
-  //     }
-  //
-  //     // 尝试从数据库加载用户
-  //     await this.appDataManager.loadCurrentUser();
-  //     return this.appDataManager.isLoggedIn();
-  //   } catch (error) {
-  //     console.error('Auto login error:', error);
-  //     return false;
-  //   }
-  // }
-  //
-  // async logout(): Promise<boolean> {
-  //   try {
-  //     await this.appDataManager.logout()
-  //   } catch (error) {
-  //     console.error('Logout API call failed:', error);
-  //   }
-  //
-  //   // 清除本地状态
-  //   return await this.appDataManager.logout();
-  // }
-  //
-  // // 获取当前用户信息
-  // getCurrentUser(): User | null {
-  //   return this.appDataManager.getCurrentUser();
-  // }
-  //
-  // // 检查登录状态
-  // isLoggedIn(): boolean {
-  //   return this.appDataManager.isLoggedIn();
-  // }
-
-  private createUserFromResponse(data: AuthResponse): User {
+  private createUserFromLoginVO(data: UserLoginVO): User {
     const user = new User();
-    user.userId = data.user?.userId || this.generateUserId();
-    user.username = data.user?.username || '';
-    user.phone = data.user?.phone || '';
-    user.email = data.user?.email || '';
-    user.avatar = data.user?.avatar || '';
-    user.token = data.token || '';
-    user.createTime = data.user?.createTime || Date.now();
+    user.userId = data.id.toString();
+    user.username = '';
+    user.phone = '';
+    user.email = '';
+    user.avatar = '';
+    user.token = data.token;
+    user.createTime = Date.now();
     user.preferences = new UserPreferences();
 
     return user;
-  }
-
-  private generateUserId(): string {
-    return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 }
 

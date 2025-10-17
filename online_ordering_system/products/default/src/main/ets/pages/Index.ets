@@ -1,14 +1,21 @@
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { drawing } from '@kit.ArkGraphics2D';
-import {UserPage} from 'user'
+import { UserPage } from 'user';
+import { AuthStateService } from '../service/AuthStateService';
+import { LoginPage, RegisterPage } from 'authentication';
+import { HomePage } from 'restaurant';
+
 @Entry
 @Component
 struct Index {
+  @State isLogin: boolean = false;
   @State currentIndex: number = 0;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
+  @Provide('mainPathStack') mainPathStack: NavPathStack = new NavPathStack();
   private tabsController: TabsController = new TabsController();
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
+  private authStateService: AuthStateService = AuthStateService.getInstance();
 
   aboutToAppear() {
     this.breakpointSystem.register();
@@ -18,10 +25,78 @@ struct Index {
     this.breakpointSystem.unregister();
   }
 
+  onPageShow() {
+    this.checkAuthStatus();
+  }
+
+  private async checkAuthStatus(): Promise<void> {
+    try {
+      this.isLogin = await this.authStateService.checkLoginStatus();
+      if (!this.isLogin) {
+        this.mainPathStack.pushPathByName('login', null);
+      }
+    } catch (error) {
+      console.error('Check auth status error:', error);
+    }
+  }
+
+  build() {
+    Navigation(this.mainPathStack) {
+      Column() {
+        this.buildMainContent();
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('sys.color.comp_background_list_card'))
+    }
+    .navDestination(this.mainRouter)
+    .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
+  }
+
   @Builder
-  tabBarBuilder(title: string, targetIndex: number, icon: Resource,activeIcon: Resource) {
+  mainRouter(name: string, _param?: Object) {
+    if (name === 'login') {
+      LoginPage()
+    } else if (name === 'register') {
+      RegisterPage()
+    }
+  }
+
+  @Builder
+  buildMainContent() {
+    Tabs({
+      barPosition: this.currentBreakpoint === BreakpointTypeEnum.LG ?
+      BarPosition.Start :
+      BarPosition.End,
+      controller: this.tabsController
+    }) {
+      TabContent() {
+        HomePage()
+      }.tabBar(this.tabBarBuilder("首页", 0, $r("app.media.home"), $r("app.media.home_active")))
+
+      TabContent() {
+        // 订单内容
+      }.tabBar(this.tabBarBuilder("订单", 1, $r("app.media.order"), $r("app.media.order_active")))
+
+      TabContent() {
+        UserPage()
+      }.tabBar(this.tabBarBuilder("我", 2, $r("app.media.mine"), $r("app.media.mine_active")))
+    }
+    .scrollable(false)
+    .vertical(this.currentBreakpoint === BreakpointTypeEnum.LG ? true : false)
+    .divider({ strokeWidth: 0.5, color: '#E8E8E8' })
+    .backgroundColor($r('sys.color.comp_background_list_card'))
+    .barWidth(this.currentBreakpoint === BreakpointTypeEnum.LG ? 120 : '100%')
+    .barHeight(this.currentBreakpoint === BreakpointTypeEnum.LG ? '100%' : 80)
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  tabBarBuilder(title: string, targetIndex: number, icon: Resource, activeIcon: Resource) {
     Column() {
-      Image(this.currentIndex==targetIndex?activeIcon:icon)
+      Image(this.currentIndex == targetIndex ? activeIcon : icon)
         .width(24)
         .height(24)
         .colorFilter(this.currentIndex === targetIndex ?
@@ -53,38 +128,5 @@ struct Index {
       this.currentIndex = targetIndex;
       this.tabsController.changeIndex(targetIndex);
     })
-  }
-
-  build() {
-    Tabs({
-      barPosition: this.currentBreakpoint === BreakpointTypeEnum.LG ?
-      BarPosition.Start :
-      BarPosition.End,
-      controller: this.tabsController
-    }) {
-      TabContent() {
-        // 首页内容
-      }.tabBar(this.tabBarBuilder("首页", 0, $r("app.media.home"),$r("app.media.home_active")))
-
-      TabContent() {
-        // 订单内容
-      }.tabBar(this.tabBarBuilder("订单", 1, $r("app.media.order"),$r("app.media.order_active")))
-
-      TabContent() {
-        // 我的内容
-        UserPage()
-      }.tabBar(this.tabBarBuilder("我", 2, $r("app.media.mine"),$r("app.media.mine_active")))
-    }
-    .scrollable(false)
-    .vertical(this.currentBreakpoint === BreakpointTypeEnum.LG ? true : false)
-    .divider({
-      strokeWidth: 0.5,
-      color: '#E8E8E8'
-    })
-    .backgroundColor($r('sys.color.comp_background_list_card'))
-    .barWidth(this.currentBreakpoint === BreakpointTypeEnum.LG ? 120 : '100%')
-    .barHeight(this.currentBreakpoint === BreakpointTypeEnum.LG ? '100%' : 80)
-    .width('100%')
-    .height('100%')
   }
 }

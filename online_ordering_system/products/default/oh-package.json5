@@ -7,6 +7,9 @@
   "license": "",
   "dependencies": {
     "utils": "file:../../commons/Utils",
-    "user": "file:../../features/User"
+    "common": "file:../../commons/common",
+    "restaurant": "file:../../features/Restaurant",
+    "user": "file:../../features/User",
+    "authentication": "file:../../features/Authentication"
   }
 }

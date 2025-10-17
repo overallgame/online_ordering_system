@@ -1,9 +1,8 @@
 import { AuthService, RegisterRequest, AuthResponse } from '../service/AuthService';
-import { router } from '@kit.ArkUI';
 
-@Entry
 @Component
-struct RegisterPage {
+export struct RegisterPage {
+  @Consume('mainPathStack') mainPathStack: NavPathStack;
   private authService: AuthService = new AuthService();
   @State registerRequest: RegisterRequest = new RegisterRequest();
   @State isLoading: boolean = false;
@@ -12,13 +11,11 @@ struct RegisterPage {
 
   build() {
     Column() {
-      // 头部标题
       Text('用户注册')
         .fontSize(30)
         .fontWeight(FontWeight.Bold)
         .margin({ top: 60, bottom: 40 })
 
-      // 用户名输入框
       TextInput({
         placeholder: '请输入用户名',
         text: this.registerRequest.username
@@ -32,41 +29,8 @@ struct RegisterPage {
           this.registerRequest.username = value;
           this.clearMessages();
         })
-        .margin({ bottom: 15 })
+        .margin({ bottom: 20 })
 
-      // 手机号输入框
-      TextInput({
-        placeholder: '请输入手机号',
-        text: this.registerRequest.phone
-      })
-        .width('90%')
-        .height(50)
-        .padding(10)
-        .borderRadius(10)
-        .backgroundColor(Color.White)
-        .onChange((value: string) => {
-          this.registerRequest.phone = value;
-          this.clearMessages();
-        })
-        .margin({ bottom: 15 })
-
-      // 邮箱输入框
-      TextInput({
-        placeholder: '请输入邮箱（可选）',
-        text: this.registerRequest.email
-      })
-        .width('90%')
-        .height(50)
-        .padding(10)
-        .borderRadius(10)
-        .backgroundColor(Color.White)
-        .onChange((value: string) => {
-          this.registerRequest.email = value;
-          this.clearMessages();
-        })
-        .margin({ bottom: 15 })
-
-      // 密码输入框
       TextInput({
         placeholder: '请输入密码',
         text: this.registerRequest.password
@@ -81,26 +45,8 @@ struct RegisterPage {
           this.registerRequest.password = value;
           this.clearMessages();
         })
-        .margin({ bottom: 15 })
-
-      // 确认密码输入框
-      TextInput({
-        placeholder: '请确认密码',
-        text: this.registerRequest.confirmPassword
-      })
-        .width('90%')
-        .height(50)
-        .padding(10)
-        .borderRadius(10)
-        .backgroundColor(Color.White)
-        .type(InputType.Password)
-        .onChange((value: string) => {
-          this.registerRequest.confirmPassword = value;
-          this.clearMessages();
-        })
         .margin({ bottom: 20 })
 
-      // 错误信息显示
       if (this.errorMessage) {
         Text(this.errorMessage)
           .fontSize(14)
@@ -110,7 +56,6 @@ struct RegisterPage {
           .margin({ bottom: 10 })
       }
 
-      // 成功信息显示
       if (this.successMessage) {
         Text(this.successMessage)
           .fontSize(14)
@@ -120,7 +65,6 @@ struct RegisterPage {
           .margin({ bottom: 10 })
       }
 
-      // 注册按钮
       Button('注册', { type: ButtonType.Capsule, stateEffect: true })
         .width('90%')
         .height(50)
@@ -133,7 +77,6 @@ struct RegisterPage {
         })
         .margin({ bottom: 20 })
 
-      // 加载状态
       if (this.isLoading) {
         LoadingProgress()
           .width(30)
@@ -141,7 +84,6 @@ struct RegisterPage {
           .margin({ bottom: 20 })
       }
 
-      // 登录链接
       Row() {
         Text('已有账号？')
           .fontSize(14)
@@ -150,7 +92,7 @@ struct RegisterPage {
           .fontSize(14)
           .fontColor('#007AFF')
           .onClick(() => {
-            router.back();
+            this.mainPathStack.pop();
           })
       }
       .margin({ top: 30 })
@@ -163,7 +105,6 @@ struct RegisterPage {
     .backgroundColor('#F5F5F5')
   }
 
-  // 处理注册
   private async handleRegister(): Promise<void> {
     this.isLoading = true;
     this.clearMessages();
@@ -172,11 +113,10 @@ struct RegisterPage {
       const response: AuthResponse = await this.authService.register(this.registerRequest);
 
       if (response.success) {
-        this.successMessage = '注册成功！正在跳转...';
-        // 注册成功后自动登录并跳转
+        this.successMessage = '注册成功！请返回登录页面登录';
         setTimeout(() => {
-          router.replaceUrl({ url: 'pages/HomePage' });
-        }, 1500);
+          this.mainPathStack.pop();
+        }, 2000);
       } else {
         this.errorMessage = response.message;
       }
@@ -188,15 +128,11 @@ struct RegisterPage {
     }
   }
 
-  // 检查表单是否有效
   private isFormValid(): boolean {
     return this.registerRequest.username.trim().length > 0 &&
-      this.registerRequest.phone.trim().length > 0 &&
-      this.registerRequest.password.trim().length >= 6 &&
-      this.registerRequest.password === this.registerRequest.confirmPassword
+      this.registerRequest.password.trim().length >= 6
   }
 
-  // 清除消息
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';

@@ -1,18 +1,16 @@
-import { Combo } from 'common';
-import { ComboRepository } from '../repository/ComboRepository';
-import { ReviewRepository, DishReview } from '../repository/ReviewRepository';
+import { Combo, Review } from 'common';
+import { ReviewRepository } from '../repository/ReviewRepository';
 import { DataState, idleState, loadingState, successState, errorState } from '../util/DataState';
 import { Failure } from '../util/Result';
 
 export class ComboDetailViewModel {
-  private comboRepository: ComboRepository = new ComboRepository();
   private reviewRepository: ReviewRepository = new ReviewRepository();
 
   // 套餐信息
   combo?: Combo;
   
   // 评论列表数据状态
-  reviewsState: DataState<Array<DishReview>> = idleState<Array<DishReview>>([]);
+  reviewsState: DataState<Array<Review>> = idleState<Array<Review>>([]);
   isLoadingReviews: boolean = false;
   isLoadingMoreReviews: boolean = false;
   hasMoreReviews: boolean = false;
@@ -51,19 +49,6 @@ export class ComboDetailViewModel {
       // 可在 UI 侧根据 isLoadingMoreReviews + failure.error 显示 Toast
     }
     this.isLoadingMoreReviews = false;
-  }
-
-  async refreshReviews(comboId: string): Promise<void> {
-    this.isLoadingReviews = true;
-    await this.loadReviews(comboId);
-    this.isLoadingReviews = false;
-  }
-
-  async loadComboDetails(comboId: string): Promise<void> {
-    const result = await this.comboRepository.fetchComboById(comboId);
-    if (result.ok) {
-      this.combo = result.data;
-    }
   }
 }
 

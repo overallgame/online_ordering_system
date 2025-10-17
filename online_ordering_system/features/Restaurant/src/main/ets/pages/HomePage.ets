@@ -1,16 +1,16 @@
-import { Dish } from 'common';
+import { Category, Dish } from 'common';
 import { DishViewModel } from '../viewModel/DishViewModel';
 import { LoadStatus } from '../util/DataState';
 import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum, BreakpointType } from 'utils/src/main/ets/utils/BreakpointSystem';
-import { PageName, DishDetailParams } from '../util/NavigationTypes';
+import { PageName } from '../util/NavigationTypes';
 import { DishDetailPage } from './DishDetailPage';
 import { ComboDetailPage } from './ComboDetailPage';
 import { ComboRecommendPage } from './ComboRecommendPage';
 import { DeliveryPage } from './DeliveryPage';
-import { CheckoutPage } from './CheckoutPage';
 import { PaymentSuccessPage } from './PaymentSuccessPage';
 import { OnlineOrderPage } from './OnlineOrderPage';
+import { CategoryTabsComponent } from '../view/CategoryTabsComponent';
 
 // 功能项接口
 interface FeatureItem {
@@ -19,9 +19,8 @@ interface FeatureItem {
   icon: Resource;
 }
 
-@Entry
 @Component
-struct HomePage {
+export struct HomePage {
   @Provide('restaurantPathStack') restaurantPathStack: NavPathStack = new NavPathStack();
   // 轮播图数据
   @State banners: string[] = [
@@ -36,68 +35,69 @@ struct HomePage {
     { id: '3', name: '外卖配送', icon: $r('app.media.deliveryIcon') },
   ];
   private viewModel: DishViewModel = new DishViewModel();
+  @State categories: Category[] = [];
+  @State selectedCategory: Category | null = null;
   @State dishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
   @State error?: string = undefined;
   @State isRefreshing: boolean = false;
-  @State isLoadingMore: boolean = false;
-  @State hasMore: boolean = false;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
 
   aboutToAppear() {
     this.breakpointSystem.register();
-    this.loadInitial();
+    this.loadCategories();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
   }
 
+  private async loadCategories() {
+    this.categories = await this.viewModel.loadCategories(1);
+    if (this.categories.length > 0) {
+      this.selectedCategory = this.categories[0];
+      await this.loadInitial();
+    }
+  }
+
   private async loadInitial() {
     this.status = LoadStatus.Loading;
     this.error = undefined;
-    await this.viewModel.loadInitial();
+
+    if (this.selectedCategory) {
+      await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    } else {
+      await this.viewModel.loadDishesByCategoryId(101);
+    }
+    
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
-    this.hasMore = this.viewModel.hasMore;
   }
 
   private async onRefresh() {
     this.isRefreshing = true;
-    await this.viewModel.refresh();
+
+    if (this.selectedCategory) {
+      await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    } else {
+      await this.viewModel.loadDishesByCategoryId(101);
+    }
+    
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
-    this.hasMore = this.viewModel.hasMore;
     this.isRefreshing = false;
-  }
-
-  private async onLoadMore() {
-    if (this.isLoadingMore || !this.hasMore) {
-      return;
-    }
-    this.isLoadingMore = true;
-    await this.viewModel.loadMore();
-    this.dishes = this.viewModel.state.data;
-    this.hasMore = this.viewModel.hasMore;
-    this.isLoadingMore = false;
   }
 
   build() {
     Navigation(this.restaurantPathStack) {
       Column() {
-        // 第一部分：餐厅标题
         this.buildHeader()
-
-        // 第二部分：轮播图
         this.buildBanner()
-
-        // 第三部分：功能按钮
         this.buildFeatureButtons()
-
-        // 第四部分：菜品列表
+        this.buildCategoryTabs()
         this.buildDishGrid()
       }
       .width('100%')
@@ -122,8 +122,6 @@ struct HomePage {
       OnlineOrderPage()
     } else if (name === PageName.DELIVERY) {
       DeliveryPage()
-    } else if (name === PageName.CHECKOUT) {
-      CheckoutPage()
     } else if (name === PageName.PAYMENT_SUCCESS) {
       PaymentSuccessPage()
     }
@@ -208,7 +206,16 @@ struct HomePage {
     .shadow({ radius: 2, color: '#1A000000', offsetX: 0, offsetY: 1 })
   }
 
-  // 第四部分：菜品列表
+  // 第四部分：分类栏
+  @Builder
+  buildCategoryTabs() {
+    CategoryTabsComponent({
+      categories: this.categories,
+      selectedCategory: $selectedCategory
+    })
+  }
+
+  // 第五部分：菜品列表
   @Builder
   buildDishGrid() {
     Column() {
@@ -265,21 +272,6 @@ struct HomePage {
         .width('92%')
         .scrollBar(BarState.Off)
         .padding({ top: 2, left: 16, right: 16 })
-
-        if (this.hasMore) {
-          Row() {
-            if (this.isLoadingMore) {
-              LoadingProgress().width(20).height(20)
-              Text(' 正在加载更多...').fontSize(12).fontColor('#666666')
-            } else {
-              Button('加载更多').onClick(() => this.onLoadMore())
-            }
-          }
-          .width('100%')
-          .height(56)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-        }
       }
     }
     .width('100%')
@@ -289,14 +281,12 @@ struct HomePage {
   @Builder
   buildDishCard(dish: Dish) {
     Column() {
-      // 菜品图片
       Image(dish.image)
         .width('100%')
         .height(this.cardImageHeight())
         .objectFit(ImageFit.Cover)
         .borderRadius(8)
 
-      // 菜品信息
       Column() {
         Text(dish.name)
           .fontSize(14)
@@ -304,7 +294,6 @@ struct HomePage {
           .fontColor('#333333')
           .margin({ bottom: 4 })
 
-        // 评分信息
         Row() {
           this.buildRatingStars(dish.rating)
           Text(`${dish.rating} (${dish.reviewCount})`)
@@ -314,7 +303,6 @@ struct HomePage {
         }
         .margin({ bottom: 6 })
 
-        // 价格信息
         Row() {
           Text(`￥${dish.price}`)
             .fontSize(16)
@@ -351,14 +339,12 @@ struct HomePage {
   @Builder
   buildRatingStars(rating: number) {
     Row() {
-      // 完整星星
       ForEach(Array.from({ length: Math.floor(rating) }), () => {
         Text('★')
           .fontSize(14)
           .fontColor('#FFC107')
       })
 
-      // 半星
       if (rating % 1 >= 0.5) {
         Text('★')
           .fontSize(14)
@@ -366,7 +352,6 @@ struct HomePage {
           .opacity(0.7)
       }
 
-      // 空星
       ForEach(Array.from({ length: 5 - Math.floor(rating) - (rating % 1 >= 0.5 ? 1 : 0) }), () => {
         Text('☆')
           .fontSize(14)
@@ -375,7 +360,6 @@ struct HomePage {
     }
   }
 
-  // ===== 响应式辅助方法 =====
   private gridColumns(): string {
     const cols: string | undefined = new BreakpointType<string>({
       sm: '1fr 1fr',
@@ -419,27 +403,20 @@ struct HomePage {
   // 处理功能点击
   private handleFeatureClick(featureId: string): void {
     switch (featureId) {
-      case '1': // 在线点餐
+      case '1':
         this.restaurantPathStack.pushPathByName(PageName.ONLINE_ORDER, null);
         break;
-      case '2': // 套餐推荐
+      case '2':
         this.restaurantPathStack.pushPathByName(PageName.COMBO_RECOMMEND, null);
         break;
-      case '3': // 外卖配送
+      case '3':
         this.restaurantPathStack.pushPathByName(PageName.DELIVERY, null);
-        break;
-      case '4': // 优惠活动
-        console.log('优惠活动功能待开发');
         break;
     }
   }
 
   // 显示菜品详情
   private showDishDetail(dish: Dish): void {
-    const params: DishDetailParams = {
-      dishId: dish.dishId,
-      hideCart: true
-    };
-    this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, params);
+    this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, dish);
   }
 }

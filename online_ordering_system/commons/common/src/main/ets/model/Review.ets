@@ -2,6 +2,8 @@ export class Review {
   reviewId: string = '';
   orderId: string = '';
   userId: string = '';
+  userName: string = '';
+  userAvatar?: string;
   restaurantId: string = '';
   rating: number = 5;
   tasteRating: number = 5;
@@ -11,6 +13,7 @@ export class Review {
   createTime: number = 0;
   likes: number = 0;
 }
+
 
 export class ReviewSummary {
   averageRating: number = 0;

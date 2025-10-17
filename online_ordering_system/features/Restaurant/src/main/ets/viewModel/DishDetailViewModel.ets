@@ -1,18 +1,16 @@
-import { Dish } from 'common';
-import { DishRepository } from '../repository/DishRepository';
-import { ReviewRepository, DishReview } from '../repository/ReviewRepository';
+import { Dish, Review } from 'common';
+import { ReviewRepository } from '../repository/ReviewRepository';
 import { DataState, idleState, loadingState, successState, errorState } from '../util/DataState';
 import { Failure } from '../util/Result';
 
 export class DishDetailViewModel {
-  private dishRepository: DishRepository = new DishRepository();
   private reviewRepository: ReviewRepository = new ReviewRepository();
 
   // 菜品信息
   dish?: Dish;
   
   // 评论列表数据状态
-  reviewsState: DataState<Array<DishReview>> = idleState<Array<DishReview>>([]);
+  reviewsState: DataState<Array<Review>> = idleState<Array<Review>>([]);
   isLoadingReviews: boolean = false;
   isLoadingMoreReviews: boolean = false;
   hasMoreReviews: boolean = false;
@@ -51,18 +49,5 @@ export class DishDetailViewModel {
       // 可在 UI 侧根据 isLoadingMoreReviews + failure.error 显示 Toast
     }
     this.isLoadingMoreReviews = false;
-  }
-
-  async refreshReviews(dishId: string): Promise<void> {
-    this.isLoadingReviews = true;
-    await this.loadReviews(dishId);
-    this.isLoadingReviews = false;
-  }
-
-  async loadDishDetails(dishId: string): Promise<void> {
-    const result = await this.dishRepository.fetchDishById(dishId);
-    if (result.ok) {
-      this.dish = result.data;
-    }
   }
 }

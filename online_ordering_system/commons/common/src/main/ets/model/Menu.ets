@@ -8,6 +8,19 @@ export class Menu {
   updateTime: number = 0;
 }
 
+// API响应的分类模型
+export class Category {
+  id: number = 0;
+  name: string = '';
+  type: number = 1; // 1 菜品分类 2 套餐分类
+  sort: number = 0;
+  status: number = 1;
+  createTime: string = '';
+  createUser: number = 0;
+  updateTime: string = '';
+  updateUser: number = 0;
+}
+
 export class MenuCategory {
   categoryId: string = '';
   name: string = '';

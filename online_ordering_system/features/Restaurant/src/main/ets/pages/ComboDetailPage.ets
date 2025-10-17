@@ -1,42 +1,53 @@
-import { Combo } from 'common';
+import { Combo, ComboDish } from 'common';
 import { ComboDetailViewModel } from '../viewModel/ComboDetailViewModel';
-import { CartViewModel } from '../viewModel/CartViewModel';
-import { DishReview } from '../repository/ReviewRepository';
+import { ComboViewModel } from '../viewModel/ComboViewModel';
+import { Review } from 'common';
 import { LoadStatus } from '../util/DataState';
-import { PageName, ComboDetailParams } from '../util/NavigationTypes';
+import { PageName } from '../util/NavigationTypes';
 
 @Component
 export struct ComboDetailPage {
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   private viewModel: ComboDetailViewModel = new ComboDetailViewModel();
-  private cartViewModel: CartViewModel = new CartViewModel();
+  private comboViewModel: ComboViewModel = new ComboViewModel();
   @State combo?: Combo = undefined;
-  @State reviews: DishReview[] = [];
+  @State comboDishes: ComboDish[] = [];
+  @State dishesLoading: boolean = false;
+  @State dishesError?: string = undefined;
+  @State reviews: Review[] = [];
   @State reviewStatus: LoadStatus = LoadStatus.Idle;
   @State reviewError?: string = undefined;
   @State isLoadingMoreReviews: boolean = false;
   @State hasMoreReviews: boolean = false;
-  // 购物车状态
-  @State comboQuantity: number = 0;
-  @State cartTotalQuantity: number = 0;
-  @State cartTotalAmount: number = 0;
+  // 收藏状态
+  @State isFavorited: boolean = false;
   private comboId: string = '';
 
   aboutToAppear() {
-    const params = this.restaurantPathStack.getParamByName(PageName.COMBO_DETAIL)[0] as ComboDetailParams;
-    if (params && params.comboId) {
-      this.comboId = params.comboId;
-      this.loadComboInfo();
+    this.combo = this.restaurantPathStack.getParamByName(PageName.COMBO_DETAIL)[0] as Combo;
+    if (this.combo) {
+      this.comboId = this.combo.comboId;
+      this.checkFavoriteStatus();
+      this.loadComboDishes();
       this.loadReviews();
     }
   }
 
-  private async loadComboInfo() {
-    await this.viewModel.loadComboDetails(this.comboId);
-    this.combo = this.viewModel.combo;
-    if (this.combo) {
-      this.comboQuantity = this.cartViewModel.getItemQuantity(this.combo.comboId);
-      this.syncCartState();
+  // 加载套餐菜品信息
+  private async loadComboDishes() {
+    if (!this.comboId) return;
+    
+    this.dishesLoading = true;
+    this.dishesError = undefined;
+    
+    try {
+      this.comboDishes = await this.comboViewModel.loadComboDishesByComboId(this.comboId);
+      console.log('ComboDetailPage: 加载套餐菜品成功，菜品数量:', this.comboDishes.length);
+    } catch (error) {
+      console.error('ComboDetailPage: 加载套餐菜品失败:', error);
+      this.dishesError = '加载菜品信息失败';
+    } finally {
+      this.dishesLoading = false;
     }
   }
 
@@ -61,39 +72,27 @@ export struct ComboDetailPage {
     this.isLoadingMoreReviews = false;
   }
 
-  // 同步购物车状态
-  private syncCartState(): void {
-    this.cartTotalQuantity = this.cartViewModel.totalQuantity;
-    this.cartTotalAmount = this.cartViewModel.totalAmount;
-    if (this.combo) {
-      this.comboQuantity = this.cartViewModel.getItemQuantity(this.combo.comboId);
-    }
+  // 检查收藏状态
+  private checkFavoriteStatus(): void {
+    // TODO: 从本地存储或后端检查收藏状态
+    // 这里先模拟一个状态
+    this.isFavorited = false;
   }
 
-  // 添加到购物车
-  private addToCart(): void {
-    if (this.combo) {
-      this.cartViewModel.addToCart(this.combo);
-      this.syncCartState();
-    }
-  }
-
-  // 更新数量
-  private updateQuantity(quantity: number): void {
-    if (this.combo) {
-      this.cartViewModel.updateQuantity(this.combo.comboId, quantity);
-      this.syncCartState();
-    }
+  // 切换收藏状态
+  private toggleFavorite(): void {
+    this.isFavorited = !this.isFavorited;
+    // TODO: 保存收藏状态到本地存储或同步到后端
+    console.log(`Combo ${this.combo?.name} ${this.isFavorited ? '收藏' : '取消收藏'}`);
   }
 
   build() {
     NavDestination() {
-      Column() {
-      // 第一部分：套餐图片和返回按钮
-      this.buildComboImage()
-
       Scroll() {
         Column() {
+          // 第一部分：套餐图片和返回按钮
+          this.buildComboImage()
+
           // 第二部分：套餐信息
           this.buildComboInfo()
 
@@ -103,13 +102,12 @@ export struct ComboDetailPage {
           // 第四部分：评论列表
           this.buildReviewList()
         }
+        .width('100%')
       }
-      .layoutWeight(1)
       .scrollBar(BarState.Auto)
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('sys.color.comp_background_list_card'))
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('sys.color.comp_background_list_card'))
     }
     .hideTitleBar(true)
   }
@@ -118,203 +116,248 @@ export struct ComboDetailPage {
   @Builder
   buildComboImage() {
     Stack({ alignContent: Alignment.TopStart }) {
-      Column() {
-        if (this.combo) {
-          Text(this.combo.icon)
-            .fontSize(120)
-            .textAlign(TextAlign.Center)
-        }
+      if (this.combo) {
+        Image(this.combo.icon)
+          .width('100%')
+          .height(300)
+          .objectFit(ImageFit.Cover)
       }
-      .width('100%')
-      .height(280)
-      .backgroundColor('#F8F8F8')
-      .justifyContent(FlexAlign.Center)
 
       Row() {
-        Text('←')
-          .fontSize(20)
-          .fontColor('#333333')
+        Image($r('app.media.back'))
+          .width(24)
+          .height(24)
+          .objectFit(ImageFit.Contain)
       }
       .width(40)
       .height(40)
-      .backgroundColor(Color.White)
+      .backgroundColor('rgba(0, 0, 0, 0.3)')
       .borderRadius(20)
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
-      .margin({ left: 16, top: 16 })
-      .shadow({
-        radius: 4,
-        color: '#1A000000',
-        offsetX: 0,
-        offsetY: 2
-      })
+      .margin({ top: 16, left: 16 })
       .onClick(() => {
         this.restaurantPathStack.pop();
       })
     }
     .width('100%')
-    .height(280)
+    .height(300)
   }
 
   // 第二部分：套餐信息
   @Builder
   buildComboInfo() {
-    Column() {
-      Row() {
-        Text(this.combo?.name)
-          .fontSize(22)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+    if (this.combo) {
+      Column() {
+        Row() {
+          Column() {
+            Text(this.combo.name)
+              .fontSize(22)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#333333')
+              .margin({ bottom: 8 })
+
+            Row() {
+              Text('★')
+                .fontSize(14)
+                .fontColor('#FFC107')
+              Text(`${this.combo.rating}`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ left: 4, right: 12 })
+
+              ForEach(this.combo.tags, (tag: string) => {
+                Text(tag)
+                  .fontSize(10)
+                  .fontColor('#FF6B6B')
+                  .backgroundColor('#FFF0F0')
+                  .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                  .borderRadius(8)
+                  .margin({ right: 4 })
+              })
+            }
+            .margin({ bottom: 12 })
+
+            Row() {
+              Text(`￥${this.combo.price}`)
+                .fontSize(24)
+                .fontColor('#FF6B6B')
+                .fontWeight(FontWeight.Bold)
+
+              if (this.combo.originalPrice && this.combo.originalPrice > this.combo.price) {
+                Text(`￥${this.combo.originalPrice}`)
+                  .fontSize(14)
+                  .fontColor('#999999')
+                  .decoration({ type: TextDecorationType.LineThrough })
+                  .margin({ left: 8 })
+              }
+            }
+          }
+          .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
 
-        if (this.comboQuantity > 0) {
+          // 收藏按钮
           Row() {
-            Row() {
-              Text('-')
-                .fontSize(16)
-                .fontColor(Color.White)
+            Text(this.isFavorited ? '❤️' : '🤍')
+              .fontSize(20)
             }
-            .width(28)
-            .height(28)
-            .backgroundColor('#FF6B6B')
-            .borderRadius(14)
+            .width(40)
+            .height(40)
+            .backgroundColor(this.isFavorited ? '#FFF0F0' : '#F8F8F8')
+            .borderRadius(20)
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .onClick(() => {
-              this.updateQuantity(this.comboQuantity - 1);
+              this.toggleFavorite();
             })
-
-            Text(`${this.comboQuantity}`)
-              .fontSize(14)
-              .fontColor('#333333')
-              .fontWeight(FontWeight.Medium)
-              .margin({ left: 10, right: 10 })
-
-            Row() {
-              Text('+')
-                .fontSize(16)
-                .fontColor(Color.White)
-            }
-            .width(28)
-            .height(28)
-            .backgroundColor('#FF6B6B')
-            .borderRadius(14)
-            .justifyContent(FlexAlign.Center)
-            .alignItems(VerticalAlign.Center)
-            .onClick(() => {
-              this.addToCart();
-            })
-          }
-          .alignItems(VerticalAlign.Center)
-        } else {
-          Row() {
-            Text('+')
-              .fontSize(18)
-              .fontColor(Color.White)
-          }
-          .width(32)
-          .height(32)
-          .backgroundColor('#FF6B6B')
-          .borderRadius(16)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-          .onClick(() => {
-            this.addToCart();
-          })
         }
+        .width('100%')
+        .alignItems(VerticalAlign.Top)
       }
       .width('100%')
+      .padding(16)
+      .backgroundColor(Color.White)
       .margin({ bottom: 12 })
-
-      Row() {
-        Text('★')
-          .fontSize(16)
-          .fontColor('#FFC107')
-        Text(`${this.combo?.rating}`)
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ left: 4 })
-        Text(`(${this.combo?.reviewCount}条评论)`)
-          .fontSize(12)
-          .fontColor('#999999')
-          .margin({ left: 4 })
-      }
-      .margin({ bottom: 12 })
-
-      if (this.combo!!.tags.length > 0) {
-        Row() {
-          ForEach(this.combo?.tags, (tag: string) => {
-            Text(tag)
-              .fontSize(12)
-              .fontColor('#FF6B6B')
-              .backgroundColor('#FFF0F0')
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .borderRadius(12)
-              .margin({ right: 8 })
-          })
-        }
-        .margin({ bottom: 12 })
-      }
-
-      Row() {
-        Text(`￥${this.combo?.price}`)
-          .fontSize(24)
-          .fontColor('#FF6B6B')
-          .fontWeight(FontWeight.Bold)
-
-        if (this.combo?.originalPrice && this.combo.originalPrice > this.combo.price) {
-          Text(`￥${this.combo.originalPrice}`)
-            .fontSize(14)
-            .fontColor('#999999')
-            .decoration({ type: TextDecorationType.LineThrough })
-            .margin({ left: 8 })
-
-          Text(`省￥${this.combo.discount}`)
-            .fontSize(12)
-            .fontColor('#FF6B6B')
-            .backgroundColor('#FFF0F0')
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-            .borderRadius(8)
-            .margin({ left: 8 })
-        }
-      }
-      .margin({ bottom: 12 })
-
-      Row() {
-        Text('⏱')
-          .fontSize(14)
-          .margin({ right: 4 })
-        Text(`预计${this.combo?.preparationTime}分钟`)
-          .fontSize(13)
-          .fontColor('#666666')
-      }
     }
-    .width('100%')
-    .padding(16)
-    .backgroundColor(Color.White)
-    .margin({ bottom: 12 })
   }
 
-  // 第三部分：套餐描述
+  // 第三部分：套餐描述和菜品列表
   @Builder
   buildDescription() {
     Column() {
-      Text('套餐介绍')
-        .fontSize(16)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#333333')
-        .margin({ bottom: 12 })
+      // 套餐介绍
+      if (this.combo && this.combo.description) {
+        Column() {
+          Text('套餐介绍')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+            .margin({ bottom: 12 })
 
-      Text(this.combo?.description)
-        .fontSize(14)
-        .fontColor('#666666')
-        .lineHeight(22)
+          Text(this.combo.description)
+            .fontSize(14)
+            .fontColor('#666666')
+            .lineHeight(22)
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+        .margin({ bottom: 16 })
+      }
+
+      // 套餐菜品列表
+      Column() {
+        Text('套餐菜品')
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#333333')
+          .margin({ bottom: 12 })
+
+        if (this.dishesLoading) {
+          Row() {
+            LoadingProgress()
+              .width(20)
+              .height(20)
+            Text(' 正在加载菜品信息...')
+              .fontSize(14)
+              .fontColor('#666666')
+          }
+          .width('100%')
+          .height(60)
+          .justifyContent(FlexAlign.Center)
+        } else if (this.dishesError) {
+          Column() {
+            Text(this.dishesError)
+              .fontSize(14)
+              .fontColor('#FF6B6B')
+            Button('重试')
+              .fontSize(12)
+              .onClick(() => {
+                this.loadComboDishes();
+              })
+              .margin({ top: 8 })
+          }
+          .width('100%')
+          .height(60)
+          .justifyContent(FlexAlign.Center)
+        } else if (this.comboDishes.length === 0) {
+          Text('暂无菜品信息')
+            .fontSize(14)
+            .fontColor('#999999')
+            .width('100%')
+            .height(60)
+            .textAlign(TextAlign.Center)
+        } else {
+          Column() {
+            ForEach(this.comboDishes, (comboDish: ComboDish, index: number) => {
+              this.buildDishItem(comboDish, index)
+            })
+          }
+          .width('100%')
+        }
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+
+      Divider()
+        .margin({ top: 16 })
+        .color('#F0F0F0')
     }
     .width('100%')
     .padding(16)
     .backgroundColor(Color.White)
     .alignItems(HorizontalAlign.Start)
     .margin({ bottom: 12 })
+  }
+
+  // 菜品项
+  @Builder
+  buildDishItem(comboDish: ComboDish, index: number) {
+    Row() {
+      // 菜品图片
+      Image(comboDish.dish.image || 'common/images/default_dish.png')
+        .width(60)
+        .height(60)
+        .objectFit(ImageFit.Cover)
+        .borderRadius(8)
+        .margin({ right: 12 })
+
+      // 菜品信息
+      Column() {
+        Text(comboDish.dish.name)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#333333')
+          .margin({ bottom: 4 })
+
+        Row() {
+          Text(`x${comboDish.quantity}`)
+            .fontSize(12)
+            .fontColor('#FF6B6B')
+            .fontWeight(FontWeight.Medium)
+
+          if (comboDish.isRequired) {
+            Text('必选')
+              .fontSize(10)
+              .fontColor('#FF6B6B')
+              .backgroundColor('#FFF0F0')
+              .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+              .borderRadius(4)
+              .margin({ left: 8 })
+          }
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(VerticalAlign.Center)
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Top)
+    .padding({ top: 8, bottom: 8 })
+    .backgroundColor(index % 2 === 0 ? '#FAFAFA' : Color.Transparent)
+    .borderRadius(8)
+    .margin({ bottom: 4 })
   }
 
   // 第四部分：评论列表
@@ -327,11 +370,12 @@ export struct ComboDetailPage {
           .fontWeight(FontWeight.Bold)
           .fontColor('#333333')
 
+        Blank()
+
         if (this.combo) {
-          Text(`(${this.combo.reviewCount})`)
-            .fontSize(14)
+          Text(`${this.combo.reviewCount}条评价`)
+            .fontSize(12)
             .fontColor('#999999')
-            .margin({ left: 4 })
         }
       }
       .width('100%')
@@ -347,7 +391,7 @@ export struct ComboDetailPage {
             .fontColor('#666666')
         }
         .width('100%')
-        .height(80)
+        .height(100)
         .justifyContent(FlexAlign.Center)
       } else if (this.reviewStatus === LoadStatus.Error && this.reviewError) {
         Column() {
@@ -355,28 +399,30 @@ export struct ComboDetailPage {
             .fontSize(14)
             .fontColor('#FF6B6B')
           Button('重试')
-            .onClick(() => this.loadReviews())
+            .onClick(() => {
+              if (this.combo) {
+                this.loadReviews();
+              }
+            })
             .margin({ top: 8 })
         }
         .width('100%')
         .height(100)
         .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
       } else if (this.reviews.length === 0) {
         Column() {
-          Text('暂无评论')
+          Text('暂无评价')
             .fontSize(14)
             .fontColor('#999999')
         }
         .width('100%')
-        .height(80)
+        .height(100)
         .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
       } else {
         Column() {
-          ForEach(this.reviews, (review: DishReview) => {
-            this.buildReviewItem(review);
-          }, (review: DishReview) => review.reviewId)
+          ForEach(this.reviews, (review: Review) => {
+            this.buildReviewItem(review)
+          })
 
           if (this.hasMoreReviews) {
             Row() {
@@ -384,13 +430,14 @@ export struct ComboDetailPage {
                 LoadingProgress().width(20).height(20)
                 Text(' 正在加载更多...').fontSize(12).fontColor('#666666')
               } else {
-                Button('加载更多评论').onClick(() => this.onLoadMoreReviews())
+                Button('加载更多评论')
+                  .fontSize(12)
+                  .onClick(() => this.onLoadMoreReviews())
               }
             }
             .width('100%')
             .height(48)
             .justifyContent(FlexAlign.Center)
-            .margin({ top: 8 })
           }
         }
         .width('100%')
@@ -404,64 +451,55 @@ export struct ComboDetailPage {
 
   // 评论项
   @Builder
-  buildReviewItem(review: DishReview) {
+  buildReviewItem(review: Review) {
     Column() {
       Row() {
-        if (review.userAvatar) {
-          Image(review.userAvatar)
-            .width(36)
-            .height(36)
-            .borderRadius(18)
-            .margin({ right: 8 })
-        } else {
-          Text(review.userName.substring(0, 1))
-            .fontSize(16)
-            .fontColor(Color.White)
-            .width(36)
-            .height(36)
-            .borderRadius(18)
-            .backgroundColor('#FF6B6B')
-            .textAlign(TextAlign.Center)
-            .margin({ right: 8 })
-        }
+        Image(review.userAvatar || 'common/images/default_avatar.png')
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+          .margin({ right: 12 })
 
         Column() {
           Text(review.userName)
             .fontSize(14)
-            .fontWeight(FontWeight.Medium)
+            .fontWeight(FontWeight.Bold)
             .fontColor('#333333')
+            .margin({ bottom: 4 })
 
-          Text(this.formatTime(review.createTime))
-            .fontSize(12)
-            .fontColor('#999999')
-            .margin({ top: 2 })
+          Row() {
+            ForEach(Array.from({ length: review.rating }), () => {
+              Text('★')
+                .fontSize(12)
+                .fontColor('#FFC107')
+            })
+            ForEach(Array.from({ length: 5 - review.rating }), () => {
+              Text('☆')
+                .fontSize(12)
+                .fontColor('#E0E0E0')
+            })
+          }
         }
         .alignItems(HorizontalAlign.Start)
 
         Blank()
 
-        Row() {
-          Text('★')
-            .fontSize(14)
-            .fontColor('#FFC107')
-          Text(`${review.rating}`)
-            .fontSize(13)
-            .fontColor('#666666')
-            .margin({ left: 2 })
-        }
+        Text(this.formatTime(review.createTime))
+          .fontSize(12)
+          .fontColor('#999999')
       }
       .width('100%')
-      .margin({ bottom: 8 })
+      .alignItems(VerticalAlign.Top)
 
       Text(review.content)
         .fontSize(14)
-        .fontColor('#333333')
+        .fontColor('#666666')
         .lineHeight(20)
-        .margin({ bottom: 8 })
+        .margin({ top: 12, bottom: 8 })
 
-      if (review.images.length > 0) {
+      if (review.images && review.images.length > 0) {
         Row() {
-          ForEach(review.images.slice(0, 3), (image: string) => {
+          ForEach(review.images, (image: string) => {
             Image(image)
               .width(80)
               .height(80)
@@ -474,42 +512,34 @@ export struct ComboDetailPage {
       }
 
       Row() {
-        Text('👍')
-          .fontSize(12)
-        Text(`${review.likes}`)
+        Text(`👍 ${review.likes}`)
           .fontSize(12)
           .fontColor('#999999')
-          .margin({ left: 4 })
       }
+
+      Divider()
+        .margin({ top: 12, bottom: 12 })
+        .color('#F0F0F0')
     }
     .width('100%')
-    .padding(12)
-    .backgroundColor('#F8F8F8')
-    .borderRadius(8)
-    .margin({ bottom: 12 })
     .alignItems(HorizontalAlign.Start)
   }
 
   // 格式化时间
   private formatTime(timestamp: number): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
+    const now = Date.now();
+    const diff = now - timestamp;
     const days = Math.floor(diff / 86400000);
-
-    if (minutes < 60) {
-      return `${minutes}分钟前`;
-    } else if (hours < 24) {
-      return `${hours}小时前`;
+    
+    if (days === 0) {
+      return '今天';
+    } else if (days === 1) {
+      return '昨天';
     } else if (days < 7) {
       return `${days}天前`;
     } else {
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      return `${year}-${month}-${day}`;
+      const date = new Date(timestamp);
+      return `${date.getMonth() + 1}-${date.getDate()}`;
     }
   }
 }

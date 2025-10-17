@@ -2,7 +2,7 @@ import http from '@ohos.net.http';
 
 export class ApiClient {
   private static instance: ApiClient;
-  private baseURL: string = 'https://api.fooddelivery.com';
+  private baseURL: string = ' http://117.72.48.167:9848/';
 
   public static getInstance(): ApiClient {
     if (!ApiClient.instance) {
@@ -101,8 +101,18 @@ export interface ApiResponse<T> {
 }
 
 export class ApiEndpoints {
-  static readonly LOGIN = '/api/v1/auth/login';
-  static readonly REGISTER = '/api/v1/auth/register';
+  static readonly LOGIN = '/user/user/login';
+  static readonly REGISTER = '/user/user/register';
   static readonly LOGOUT = '/api/v1/auth/logout';
   static readonly USER_PROFILE = '/api/v1/user/profile';
+  
+  // 分类相关接口
+  static readonly CATEGORY_LIST = '/user/category/list';
+  
+  // 菜品相关接口
+  static readonly DISH_LIST_BY_CATEGORY = '/user/dish/list';
+  
+  // 套餐相关接口
+  static readonly SETMEAL_LIST = '/user/setmeal/list';
+  static readonly SETMEAL_DISH_LIST = '/user/setmeal/dish';
 }

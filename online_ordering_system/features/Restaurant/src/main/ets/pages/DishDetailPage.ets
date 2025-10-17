@@ -1,45 +1,29 @@
 import { Dish } from 'common';
 import { DishDetailViewModel } from '../viewModel/DishDetailViewModel';
-import { DishReview } from '../repository/ReviewRepository';
-import { CartViewModel } from '../viewModel/CartViewModel';
+import { Review } from 'common';
 import { LoadStatus } from '../util/DataState';
-import { PageName, DishDetailParams } from '../util/NavigationTypes';
+import { PageName } from '../util/NavigationTypes';
 
 @Component
 export struct DishDetailPage {
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   private viewModel: DishDetailViewModel = new DishDetailViewModel();
-  private cartViewModel: CartViewModel = new CartViewModel();
   @State dish?: Dish = undefined;
-  @State reviews: DishReview[] = [];
+  @State reviews: Review[] = [];
   @State reviewStatus: LoadStatus = LoadStatus.Idle;
   @State reviewError?: string = undefined;
   @State isLoadingMoreReviews: boolean = false;
   @State hasMoreReviews: boolean = false;
-  @State dishQuantity: number = 0;
-  @State cartTotalQuantity: number = 0;
-  @State cartTotalAmount: number = 0;
-  @State hideCart: boolean = false;
+  // 收藏状态
+  @State isFavorited: boolean = false;
 
   aboutToAppear() {
     // 从路径栈获取参数
-    const params = this.restaurantPathStack.getParamByName(PageName.DISH_DETAIL)[0] as DishDetailParams;
-    const dishId = params?.dishId || '';
-    const hideCart = params?.hideCart || false;
-    
-    // 设置隐藏购物车状态
-    this.hideCart = hideCart;
-    
-    // 加载菜品信息
-    this.loadDishInfo(dishId);
-    
-    // 加载评论
-    this.loadReviews(dishId);
-  }
-
-  private async loadDishInfo(dishId: string) {
-    await this.viewModel.loadDishDetails(dishId);
-    this.dish = this.viewModel.dish;
+    this.dish = this.restaurantPathStack.getParamByName(PageName.DISH_DETAIL)[0] as Dish;
+    if (this.dish) {
+      this.checkFavoriteStatus();
+      this.loadReviews(this.dish.dishId);
+    }
   }
 
   private async loadReviews(dishId: string) {
@@ -63,29 +47,18 @@ export struct DishDetailPage {
     this.isLoadingMoreReviews = false;
   }
 
-  // 同步购物车状态
-  private syncCartState(): void {
-    this.cartTotalQuantity = this.cartViewModel.totalQuantity;
-    this.cartTotalAmount = this.cartViewModel.totalAmount;
-    if (this.dish) {
-      this.dishQuantity = this.cartViewModel.getDishQuantity(this.dish.dishId);
-    }
+  // 检查收藏状态
+  private checkFavoriteStatus(): void {
+    // TODO: 从本地存储或后端检查收藏状态
+    // 这里先模拟一个状态
+    this.isFavorited = false;
   }
 
-  // 添加到购物车
-  private addToCart(): void {
-    if (this.dish) {
-      this.cartViewModel.addDishToCart(this.dish);
-      this.syncCartState();
-    }
-  }
-
-  // 更新数量
-  private updateQuantity(quantity: number): void {
-    if (this.dish) {
-      this.cartViewModel.updateDishQuantity(this.dish.dishId, quantity);
-      this.syncCartState();
-    }
+  // 切换收藏状态
+  private toggleFavorite(): void {
+    this.isFavorited = !this.isFavorited;
+    // TODO: 保存收藏状态到本地存储或同步到后端
+    console.log(`Dish ${this.dish?.name} ${this.isFavorited ? '收藏' : '取消收藏'}`);
   }
 
   build() {
@@ -126,9 +99,10 @@ export struct DishDetailPage {
       }
 
       Row() {
-        Text('←')
-          .fontSize(24)
-          .fontColor(Color.White)
+        Image($r('app.media.back'))
+          .width(24)
+          .height(24)
+          .objectFit(ImageFit.Contain)
       }
       .width(40)
       .height(40)
@@ -145,7 +119,7 @@ export struct DishDetailPage {
     .height(300)
   }
 
-  // 第二部分：菜品名称和购物车按钮
+  // 第二部分：菜品名称和收藏按钮
   @Builder
   buildDishInfo() {
     if (this.dish) {
@@ -197,65 +171,20 @@ export struct DishDetailPage {
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
 
-          if (!this.hideCart) {
-            Column() {
-              if (this.dishQuantity > 0) {
-                Column() {
-                  Row() {
-                    Text('-')
-                      .fontSize(16)
-                      .fontColor(Color.White)
-                  }
-                  .width(28)
-                  .height(28)
-                  .backgroundColor('#FF6B6B')
-                  .borderRadius(14)
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(VerticalAlign.Center)
-                  .onClick(() => {
-                    this.updateQuantity(this.dishQuantity - 1);
-                  })
-
-                  Text(`${this.dishQuantity}`)
-                    .fontSize(14)
-                    .fontColor('#333333')
-                    .fontWeight(FontWeight.Medium)
-                    .margin({ top: 10, bottom: 10 })
-
-                  Row() {
-                    Text('+')
-                      .fontSize(16)
-                      .fontColor(Color.White)
-                  }
-                  .width(28)
-                  .height(28)
-                  .backgroundColor('#FF6B6B')
-                  .borderRadius(14)
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(VerticalAlign.Center)
-                  .onClick(() => {
-                    this.addToCart();
-                  })
-                }
-              } else {
-                Row() {
-                  Text('+')
-                    .fontSize(18)
-                    .fontColor(Color.White)
-                }
-                .width(32)
-                .height(32)
-                .backgroundColor('#FF6B6B')
-                .borderRadius(16)
-                .justifyContent(FlexAlign.Center)
-                .alignItems(VerticalAlign.Center)
-                .onClick(() => {
-                  this.addToCart();
-                })
-              }
-            }
-            .justifyContent(FlexAlign.Center)
+          // 收藏按钮
+          Row() {
+            Text(this.isFavorited ? '❤️' : '🤍')
+              .fontSize(20)
           }
+          .width(40)
+          .height(40)
+          .backgroundColor(this.isFavorited ? '#FFF0F0' : '#F8F8F8')
+          .borderRadius(20)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
+          .onClick(() => {
+            this.toggleFavorite();
+          })
         }
         .width('100%')
         .alignItems(VerticalAlign.Top)
@@ -355,7 +284,7 @@ export struct DishDetailPage {
         .justifyContent(FlexAlign.Center)
       } else {
         Column() {
-          ForEach(this.reviews, (review: DishReview) => {
+          ForEach(this.reviews, (review: Review) => {
             this.buildReviewItem(review)
           })
 
@@ -386,7 +315,7 @@ export struct DishDetailPage {
 
   // 评论项
   @Builder
-  buildReviewItem(review: DishReview) {
+  buildReviewItem(review: Review) {
     Column() {
       Row() {
         Image(review.userAvatar || 'common/images/default_avatar.png')

@@ -1,31 +1,17 @@
+import { Review } from 'common';
 import { Result, ok, err } from '../util/Result';
 
 export interface ReviewsPage {
-  items: Array<DishReview>;
+  items: Array<Review>;
   hasMore: boolean;
 }
 
-export class DishReview {
-  reviewId: string = '';
-  orderId: string = '';
-  userId: string = '';
-  userName: string = '';
-  userAvatar?: string;
-  restaurantId: string = '';
-  rating: number = 5;
-  tasteRating: number = 5;
-  serviceRating: number = 5;
-  content: string = '';
-  images: string[] = [];
-  createTime: number = 0;
-  likes: number = 0;
-}
 
 export class ReviewRepository {
   async fetchDishReviews(dishId: string, page: number = 1, pageSize: number = 10): Promise<Result<ReviewsPage>> {
     try {
       console.log(`Loading reviews for dish: ${dishId}`);
-      const all: Array<DishReview> = [
+      const all: Array<Review> = [
         {
           reviewId: '1',
           orderId: 'order001',
@@ -105,7 +91,7 @@ export class ReviewRepository {
       
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
-      const items: Array<DishReview> = all.slice(start, end);
+      const items: Array<Review> = all.slice(start, end);
       const hasMore: boolean = end < all.length;
       const pageData: ReviewsPage = { items: items, hasMore: hasMore };
       return ok<ReviewsPage>(pageData);
