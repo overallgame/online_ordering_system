@@ -6,6 +6,7 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 @Component
 export struct OrderStatusView {
   @ObjectLink userViewModel: UserViewModel;
+  @Consume('navStack') navStack: NavPathStack;
 
   build() {
     Row() {
@@ -21,6 +22,12 @@ export struct OrderStatusView {
       }
       .layoutWeight(1)
       .onClick(() => {
+        if (this.navStack) {
+          this.navStack.pushPath({ name: 'PendingPaymentPage' });
+        } else {
+          console.error("navStack is not initialized");
+        }
+
 
       })
       
@@ -36,7 +43,11 @@ export struct OrderStatusView {
       }
       .layoutWeight(1)
       .onClick(() => {
-
+        if (this.navStack) {
+          this.navStack.pushPath({ name: 'MyOrdersPage' });
+        } else {
+          console.error("navStack is not initialized");
+        }
       })
       
       // 待收货
@@ -51,6 +62,11 @@ export struct OrderStatusView {
       }
       .layoutWeight(1)
       .onClick(() => {
+        if (this.navStack) {
+          this.navStack.pushPath({ name: 'PendingDeliveryPage' });
+        } else {
+          console.error("navStack is not initialized");
+        }
 
       })
       

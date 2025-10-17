@@ -1,5 +1,10 @@
 export { UserPage } from './src/main/ets/pages/UserPage';
 export { UserDetailPage } from './src/main/ets/pages/UserDetailPage';
+export { MyOrdersPage } from './src/main/ets/pages/MyOrdersPage';
 export { UserViewModel } from './src/main/ets/viewmodel/UserViewModel';
-export { UserService } from './src/main/ets/service/UserService';
+export { OrderViewModel } from './src/main/ets/viewmodel/OrderViewModel';
+export { OrderService, OrderListResponse, OperationResult, PaymentResult } from './src/main/ets/service/OrderService';
 export { ToastComponent } from './src/main/ets/components/ToastComponent';
+export { OrderItemComponent } from './src/main/ets/components/OrderItemComponent';
+export { OrderStatusTag } from './src/main/ets/components/OrderStatusTag';
+export { OrderActionButtons } from './src/main/ets/components/OrderActionButtons';

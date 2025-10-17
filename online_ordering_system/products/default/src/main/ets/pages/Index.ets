@@ -19,24 +19,26 @@ struct Index {
 
   aboutToAppear() {
     this.breakpointSystem.register();
+    this.checkAuthStatus();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
   }
 
-  onPageShow() {
-    this.checkAuthStatus();
-  }
-
   private async checkAuthStatus(): Promise<void> {
     try {
-      this.isLogin = await this.authStateService.checkLoginStatus();
-      if (!this.isLogin) {
+      const loginStatus = await this.authStateService.checkLoginStatus();
+      if (!loginStatus) {
+        this.isLogin = false;
         this.mainPathStack.pushPathByName('login', null);
+      } else {
+        this.isLogin = true;
       }
     } catch (error) {
       console.error('Check auth status error:', error);
+      this.isLogin = false;
+      this.mainPathStack.pushPathByName('login', null);
     }
   }
 
@@ -60,6 +62,8 @@ struct Index {
       LoginPage()
     } else if (name === 'register') {
       RegisterPage()
+    } else {
+      this.buildMainContent()
     }
   }
 

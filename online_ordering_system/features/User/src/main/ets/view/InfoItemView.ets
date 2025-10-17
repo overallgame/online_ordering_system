@@ -18,7 +18,6 @@ export struct InfoItem {
       // 右侧内容区（根据编辑状态切换）
       if (this.isEditing&&!this.readonly  && this.onChange) {
         TextInput({
-          text: this.value, // 双向绑定关键
           placeholder: `请输入${this.label}`
         })
           .onChange(this.onChange)

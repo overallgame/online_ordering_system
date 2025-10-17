@@ -4,27 +4,35 @@ import { OrderStatusView } from '../view/OrderStatusView';
 import { MainContentView } from '../view/MainContentView';
 import {SettingPage} from './SettingPage'
 import {UserDetailPage} from './UserDetailPage'
+import {MyOrdersPage} from './MyOrdersPage'
+import {OrderViewModel} from '../viewmodel/OrderViewModel'
+import {PendingDeliveryPage} from './PendingDeliveryPage'
+import {PendingPaymentPage} from './PendingPaymentPage'
 @Entry
 @Component
 export  struct UserPage {
   @State userViewModel: UserViewModel = new UserViewModel();
   @Provide('navStack') navStack: NavPathStack = new NavPathStack();
+  @State orderViewModel: OrderViewModel = new OrderViewModel();
 
   @Builder
   PageMap(name: string) {
-    if (name === 'HomePage') {
-
+    if (name === 'MyOrdersPage') {
+      MyOrdersPage({orderViewModel:this.orderViewModel})
     }else if(name=='SettingPage'){
       SettingPage()
     }else if(name=='UserDetailPage'){
       UserDetailPage({ userViewModel: this.userViewModel })
+    }else if(name=='PendingDeliveryPage'){
+      PendingDeliveryPage({ orderViewModel:this.orderViewModel })
+    }else if(name=='PendingPaymentPage'){
+      PendingPaymentPage({ orderViewModel:this.orderViewModel })
     }
   }
 
   build() {
     Navigation(this.navStack){
       Column() {
-
         // 主要内容区域
         this.buildMainContent()
       }
