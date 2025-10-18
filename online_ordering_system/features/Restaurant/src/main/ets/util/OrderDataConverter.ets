@@ -8,7 +8,7 @@ interface ValidationResult {
 }
 
 export class OrderDataConverter {
-  static convertOrderSubmitToOrder(orderSubmitVO: OrderSubmitVO, cartItems?: CartItem[]): Order {
+  static convertOrderSubmitToOrder(orderSubmitVO: OrderSubmitVO, cartItems?: CartItem[], isPaid: boolean = true): Order {
     const order = new Order();
     
     order.orderId = orderSubmitVO.id.toString();
@@ -16,7 +16,7 @@ export class OrderDataConverter {
     order.finalAmount = orderSubmitVO.orderAmount;
     order.createTime = new Date(orderSubmitVO.orderTime).getTime();
     order.status = OrderStatus.PENDING;
-    order.paymentStatus = PaymentStatus.PAID;
+    order.paymentStatus = isPaid ? PaymentStatus.PAID : PaymentStatus.UNPAID;
 
     if (cartItems && cartItems.length > 0) {
       order.items = OrderDataConverter.convertCartItemsToOrderItems(cartItems);
@@ -51,7 +51,8 @@ export class OrderDataConverter {
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
     estimatedDeliveryTime?: number,
-    remark?: string
+    remark?: string,
+    isPaid: boolean = true
   ): OrderSubmitDTO {
     // 计算总金额
     const baseAmount = cartItems.reduce((total, item) => {
@@ -77,7 +78,7 @@ export class OrderDataConverter {
       deliveryStatus: orderType === 'delivery' ? 1 : 0,
       estimatedDeliveryTime: formatDeliveryTime(estimatedDeliveryTime),
       packAmount: orderType === 'delivery' ? 2 : 0,
-      payMethod: 1,
+      payMethod: isPaid ? 1 : 0, // 1=已支付, 0=未支付
       remark: remark || '',
       tablewareNumber: orderType === 'delivery' ? 1 : 0,
       tablewareStatus: orderType === 'delivery' ? 1 : 0

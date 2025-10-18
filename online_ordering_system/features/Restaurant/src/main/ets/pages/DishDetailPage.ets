@@ -96,6 +96,7 @@ export struct DishDetailPage {
           .width('100%')
           .height(300)
           .objectFit(ImageFit.Cover)
+          .alt($r('app.media.zwt'))
       }
 
       Row() {

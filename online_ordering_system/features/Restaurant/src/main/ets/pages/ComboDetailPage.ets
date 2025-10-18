@@ -117,10 +117,11 @@ export struct ComboDetailPage {
   buildComboImage() {
     Stack({ alignContent: Alignment.TopStart }) {
       if (this.combo) {
-        Image(this.combo.icon)
+        Image(this.combo.image)
           .width('100%')
           .height(300)
           .objectFit(ImageFit.Cover)
+          .alt($r('app.media.zwt'))
       }
 
       Row() {
@@ -318,6 +319,7 @@ export struct ComboDetailPage {
         .width(60)
         .height(60)
         .objectFit(ImageFit.Cover)
+        .alt($r('app.media.zwt'))
         .borderRadius(8)
         .margin({ right: 12 })
 

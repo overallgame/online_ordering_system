@@ -63,14 +63,17 @@ export struct HomePage {
       } else {
         console.log('HomePage: 用户未登录，使用默认分类数据');
         this.categories = this.getDefaultCategories();
+        console.log('HomePage: 默认分类数据:', this.categories);
         if (this.categories.length > 0) {
           this.selectedCategory = this.categories[0];
+          console.log('HomePage: 选中第一个分类:', this.selectedCategory);
           await this.loadInitial();
         }
       }
     } catch (error) {
       console.error('HomePage: 检查登录状态失败:', error);
       this.categories = this.getDefaultCategories();
+      console.log('HomePage: 异常情况下使用默认分类数据:', this.categories);
       if (this.categories.length > 0) {
         this.selectedCategory = this.categories[0];
         await this.loadInitial();
@@ -93,26 +96,40 @@ export struct HomePage {
   }
 
   private async loadCategories() {
+    console.log('HomePage: 开始加载分类数据...');
     this.categories = await this.viewModel.loadCategories(1);
+    console.log('HomePage: 加载到的分类数据:', this.categories);
     if (this.categories.length > 0) {
       this.selectedCategory = this.categories[0];
+      console.log('HomePage: 选中第一个分类:', this.selectedCategory);
       await this.loadInitial();
+    } else {
+      console.warn('HomePage: 没有加载到分类数据，使用默认分类');
+      this.categories = this.getDefaultCategories();
+      if (this.categories.length > 0) {
+        this.selectedCategory = this.categories[0];
+        await this.loadInitial();
+      }
     }
   }
 
   private async loadInitial() {
+    console.log('HomePage: 开始加载初始菜品数据...');
     this.status = LoadStatus.Loading;
     this.error = undefined;
 
     if (this.selectedCategory) {
+      console.log('HomePage: 根据选中分类加载菜品，分类ID:', this.selectedCategory.id);
       await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
     } else {
+      console.log('HomePage: 没有选中分类，使用默认分类ID 101');
       await this.viewModel.loadDishesByCategoryId(101);
     }
     
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
+    console.log('HomePage: 菜品加载完成，状态:', this.status, '菜品数量:', this.dishes.length, '错误:', this.error);
   }
 
   private async onRefresh() {
@@ -346,6 +363,7 @@ export struct HomePage {
         .height(this.cardImageHeight())
         .objectFit(ImageFit.Cover)
         .borderRadius(8)
+        .alt($r('app.media.zwt'))
 
       Column() {
         Text(dish.name)

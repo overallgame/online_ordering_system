@@ -89,6 +89,7 @@ export class OrderViewModel {
    * @param deliveryAddress 配送地址
    * @param estimatedDeliveryTime 预计送达时间
    * @param remark 备注
+   * @param isPaid 是否已支付
    * @returns 订单创建结果
    */
   async createOrder(
@@ -96,7 +97,8 @@ export class OrderViewModel {
     orderType: 'dine_in' | 'delivery',
     deliveryAddress?: string,
     estimatedDeliveryTime?: number,
-    remark?: string
+    remark?: string,
+    isPaid: boolean = true
   ): Promise<OrderOperationResult> {
     try {
       // 参数验证
@@ -113,15 +115,16 @@ export class OrderViewModel {
         cartItems,
         orderType,
         estimatedDeliveryTime,
-        remark
+        remark,
+        isPaid
       );
 
       if (result.success && result.data) {
         // 转换API响应为Order对象
-        this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems);
+        this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems, isPaid);
         this.notifyListeners();
         
-        console.log('Order created successfully:', this.currentOrder.orderId);
+        console.log('Order created successfully:', this.currentOrder.orderId, 'Paid:', isPaid);
         return { success: true, order: this.currentOrder };
       } else {
         this.error = result.error || '订单创建失败';
