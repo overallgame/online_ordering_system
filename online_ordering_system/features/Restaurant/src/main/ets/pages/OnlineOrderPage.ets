@@ -22,7 +22,7 @@ export struct OnlineOrderPage {
   @State isRefreshing: boolean = false;
   @State searchText: string = '';
   // 购物车状态
-  private cartViewModel: CartViewModel = new CartViewModel();
+  private cartViewModel: CartViewModel = new CartViewModel('', '', 'online');
   @State cartItems: CartItem[] = [];
   @State cartTotalQuantity: number = 0;
   @State cartTotalAmount: number = 0;
@@ -131,16 +131,16 @@ export struct OnlineOrderPage {
         this.dishQuantities = newQuantities;
       });
       
-      // 加载购物车数据
+      // 初始化本地独立购物车
       const loadSuccess = await this.cartViewModel.loadCart();
       if (!loadSuccess) {
-        console.warn('Failed to load cart, using empty cart');
+        console.warn('Failed to initialize local cart');
       }
       
       // 启动自动保存
       this.cartViewModel.startAutoSave();
       
-      console.log('Cart initialized successfully');
+      console.log('OnlineOrderPage: Cart initialized successfully');
     } catch (error) {
       console.error('Failed to initialize cart:', error);
       this.cartItems = [];

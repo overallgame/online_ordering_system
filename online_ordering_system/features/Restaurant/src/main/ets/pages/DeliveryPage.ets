@@ -15,7 +15,7 @@ export struct DeliveryPage {
   private viewModel: DishViewModel = new DishViewModel();
   @State categories: Category[] = [];
   @State @Watch('onSelectedCategoryChanged') selectedCategory: Category | null = null;
-  private cartViewModel: CartViewModel = new CartViewModel();
+  private cartViewModel: CartViewModel = new CartViewModel('', '', 'delivery');
   @State dishes: Dish[] = [];
   @State allDishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
@@ -133,16 +133,16 @@ export struct DeliveryPage {
         this.dishQuantities = newQuantities;
       });
       
-      // 加载购物车数据
+      // 初始化本地独立购物车
       const loadSuccess = await this.cartViewModel.loadCart();
       if (!loadSuccess) {
-        console.warn('Failed to load cart, using empty cart');
+        console.warn('Failed to initialize local cart');
       }
       
       // 启动自动保存
       this.cartViewModel.startAutoSave();
       
-      console.log('Cart initialized successfully');
+      console.log('DeliveryPage: Cart initialized successfully');
     } catch (error) {
       console.error('Failed to initialize cart:', error);
       // 确保购物车状态正确初始化
@@ -430,6 +430,12 @@ export struct DeliveryPage {
         .objectFit(ImageFit.Cover)
         .borderRadius(8)
         .margin({ right: 12 })
+        .onComplete(() => {
+          console.log('DeliveryPage: Dish image loaded successfully:', dish.image);
+        })
+        .onError((error) => {
+          console.error('DeliveryPage: Failed to load dish image:', dish.image, 'Error:', error);
+        })
         .onClick(() => {
           this.restaurantPathStack.pushPathByName(PageName.DISH_DETAIL, dish);
         })
