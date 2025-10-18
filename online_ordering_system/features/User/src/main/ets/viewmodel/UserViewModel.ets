@@ -170,7 +170,6 @@ export class UserViewModel {
     newUser.preferences.notificationEnabled=user.preferences.notificationEnabled;
     newUser.preferences.defaultPaymentMethod=user.preferences.defaultPaymentMethod;
 
-
     return newUser;
   }
 

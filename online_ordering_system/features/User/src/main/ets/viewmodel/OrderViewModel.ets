@@ -2,6 +2,7 @@ import { Order, OrderStatus, PaymentStatus, OrderType, PaymentMethod } from 'com
 import { OrderService, PaymentResult } from '../service/OrderService';
 import {OrderServiceTest} from '../test/OrderServiceTest'
 import { OrderDataConverter } from '../util/OrderDataConverter';
+import {AppDataManager} from 'common'
 /**
  * 订单ViewModel - 处理订单相关的业务逻辑
  */
@@ -30,6 +31,7 @@ export class OrderViewModel {
   private userId: string = '';
 
   constructor() {
+    this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
     OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
   }
@@ -37,8 +39,12 @@ export class OrderViewModel {
   /**
    * 设置用户ID
    */
-  setUserId(userId: string): void {
-    this.userId = userId;
+  setUserId(userId: string | undefined ): void {
+    if(userId)
+    {
+      this.userId = userId;
+    }
+
   }
 
   /**
@@ -73,14 +79,11 @@ export class OrderViewModel {
     }
 
     try {
-      // 使用管理端订单搜索接口获取用户全部订单
-      const response = await this.orderService.getUserAllOrders(
-        this.userId,
+      // 使用历史订单接口获取用户订单
+      const response = await this.orderService.getHistoryOrders(
         this.currentPage, 
         this.pageSize, 
-        this.selectedStatus,
-        this.beginTime,
-        this.endTime
+        this.selectedStatus
       );
 
       if (response.success && response.data) {

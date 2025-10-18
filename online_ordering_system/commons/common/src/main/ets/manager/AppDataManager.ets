@@ -89,6 +89,7 @@ export class AppDataManager {
 
   // 添加检查登录状态的方法
   isLoggedIn(): boolean {
+    this.loadCurrentUser()
     return !!this._currentUser && this._currentUser.isLoggedIn;
   }
 
