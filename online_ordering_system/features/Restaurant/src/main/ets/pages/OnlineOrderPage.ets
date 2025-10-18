@@ -577,7 +577,7 @@ export struct OnlineOrderPage {
   @Builder
   buildFloatingCart() {
     Row() {
-      if (this.cartTotalQuantity > 0 && this.cartItems && this.cartItems.length > 0) {
+      if (this.cartTotalQuantity > 0) {
         Row() {
           Stack() {
             Row() {

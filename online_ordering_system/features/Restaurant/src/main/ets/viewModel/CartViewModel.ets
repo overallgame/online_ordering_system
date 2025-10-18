@@ -84,24 +84,33 @@ export class CartViewModel {
   
   // 添加商品到购物车
   async addItem(dish?: Dish, combo?: Combo, quantity: number = 1, note?: string): Promise<boolean> {
+    // 参数验证
+    if (!dish && !combo) {
+      this.error = 'Either dish or combo must be provided';
+      console.error('Either dish or combo must be provided');
+      return false;
+    }
+    
+    if (quantity <= 0) {
+      this.error = 'Quantity must be greater than 0';
+      console.error('Quantity must be greater than 0');
+      return false;
+    }
+    
+    this.isLoading = true;
+    this.error = undefined;
+    
+    // 保存当前状态用于回退
+    const previousCart = this.cart.clone();
+    
     try {
-      // 参数验证
-      if (!dish && !combo) {
-        this.error = 'Either dish or combo must be provided';
-        console.error('Either dish or combo must be provided');
-        return false;
-      }
+      // 先更新本地购物车状态
+      const cartItem = new CartItem(dish, combo, quantity);
+      cartItem.note = note;
+      this.cart.addItem(cartItem);
+      this.notifyListeners(); // 立即通知UI更新
       
-      if (quantity <= 0) {
-        this.error = 'Quantity must be greater than 0';
-        console.error('Quantity must be greater than 0');
-        return false;
-      }
-      
-      this.isLoading = true;
-      this.error = undefined;
-      
-      // 调用网络API添加商品
+      // 然后调用网络API同步
       const success = await this.repository.addToCart(
         dish?.dishId ? parseInt(dish.dishId) : undefined,
         combo?.comboId ? parseInt(combo.comboId) : undefined,
@@ -109,18 +118,20 @@ export class CartViewModel {
       );
       
       if (success) {
-        // 重新加载购物车数据
-        await this.loadCart();
-        console.log('Item added to cart:', dish?.name || combo?.name);
         return true;
       } else {
-        this.error = 'Failed to add item to cart via API';
-        console.error('Failed to add item to cart via API');
+        // 回退到之前的状态
+        this.cart = previousCart;
+        this.notifyListeners();
+        this.error = '网络同步失败，请重试';
         return false;
       }
     } catch (error) {
-      this.error = 'Network error occurred';
       console.error('Failed to add item to cart:', error);
+      // 回退到之前的状态
+      this.cart = previousCart;
+      this.notifyListeners();
+      this.error = '网络连接失败，请检查网络';
       return false;
     } finally {
       this.isLoading = false;
@@ -129,26 +140,33 @@ export class CartViewModel {
   
   // 更新商品数量
   async updateItemQuantity(itemId: string, quantity: number): Promise<boolean> {
+    // 参数验证
+    if (!itemId) {
+      console.error('Item ID is required');
+      return false;
+    }
+    
+    if (quantity < 0) {
+      console.error('Quantity cannot be negative');
+      return false;
+    }
+    
+    // 找到对应的商品项
+    const cartItem = this.cart.items.find(item => item.id === itemId);
+    if (!cartItem) {
+      console.error('Cart item not found:', itemId);
+      return false;
+    }
+    
+    // 保存当前状态用于回退
+    const previousCart = this.cart.clone();
+    
     try {
-      // 参数验证
-      if (!itemId) {
-        console.error('Item ID is required');
-        return false;
-      }
+      // 先更新本地状态
+      this.cart.updateItemQuantity(itemId, quantity);
+      this.notifyListeners(); // 立即通知UI更新
       
-      if (quantity < 0) {
-        console.error('Quantity cannot be negative');
-        return false;
-      }
-      
-      // 找到对应的商品项
-      const cartItem = this.cart.items.find(item => item.id === itemId);
-      if (!cartItem) {
-        console.error('Cart item not found:', itemId);
-        return false;
-      }
-      
-      // 调用网络API更新数量
+      // 然后调用网络API同步
       const success = await this.repository.updateItemQuantity(
         quantity,
         cartItem.dish?.dishId ? parseInt(cartItem.dish.dishId) : undefined,
@@ -157,31 +175,42 @@ export class CartViewModel {
       );
       
       if (success) {
-        // 重新加载购物车数据
-        await this.loadCart();
-        console.log('Item quantity updated:', itemId, quantity);
         return true;
       } else {
-        console.error('Failed to update item quantity via API');
+        // 回退到之前的状态
+        this.cart = previousCart;
+        this.notifyListeners();
+        this.error = '网络同步失败，请重试';
         return false;
       }
     } catch (error) {
       console.error('Failed to update item quantity:', error);
+      // 回退到之前的状态
+      this.cart = previousCart;
+      this.notifyListeners();
+      this.error = '网络连接失败，请检查网络';
       return false;
     }
   }
   
   // 移除商品
   async removeItem(itemId: string): Promise<boolean> {
+    // 找到对应的商品项
+    const cartItem = this.cart.items.find(item => item.id === itemId);
+    if (!cartItem) {
+      console.error('Cart item not found:', itemId);
+      return false;
+    }
+    
+    // 保存当前状态用于回退
+    const previousCart = this.cart.clone();
+    
     try {
-      // 找到对应的商品项
-      const cartItem = this.cart.items.find(item => item.id === itemId);
-      if (!cartItem) {
-        console.error('Cart item not found:', itemId);
-        return false;
-      }
+      // 先更新本地状态
+      this.cart.removeItem(itemId);
+      this.notifyListeners(); // 立即通知UI更新
       
-      // 调用网络API删除商品
+      // 然后调用网络API同步
       const success = await this.repository.removeFromCart(
         cartItem.dish?.dishId ? parseInt(cartItem.dish.dishId) : undefined,
         cartItem.combo?.comboId ? parseInt(cartItem.combo.comboId) : undefined,
@@ -189,37 +218,52 @@ export class CartViewModel {
       );
       
       if (success) {
-        // 重新加载购物车数据
-        await this.loadCart();
-        console.log('Item removed from cart:', itemId);
         return true;
       } else {
-        console.error('Failed to remove item from cart via API');
+        // 回退到之前的状态
+        this.cart = previousCart;
+        this.notifyListeners();
+        this.error = '网络同步失败，请重试';
         return false;
       }
     } catch (error) {
       console.error('Failed to remove item from cart:', error);
+      // 回退到之前的状态
+      this.cart = previousCart;
+      this.notifyListeners();
+      this.error = '网络连接失败，请检查网络';
       return false;
     }
   }
   
   // 清空购物车
   async clearCart(): Promise<boolean> {
+    // 保存当前状态用于回退
+    const previousCart = this.cart.clone();
+    
     try {
-      // 调用网络API清空购物车
+      // 先更新本地状态
+      this.cart.clear();
+      this.notifyListeners(); // 立即通知UI更新
+      
+      // 然后调用网络API同步
       const success = await this.repository.clearCart();
       
       if (success) {
-        this.cart.clear();
-        this.notifyListeners();
-        console.log('Cart cleared');
         return true;
       } else {
-        console.error('Failed to clear cart via API');
+        // 回退到之前的状态
+        this.cart = previousCart;
+        this.notifyListeners();
+        this.error = '网络同步失败，请重试';
         return false;
       }
     } catch (error) {
       console.error('Failed to clear cart:', error);
+      // 回退到之前的状态
+      this.cart = previousCart;
+      this.notifyListeners();
+      this.error = '网络连接失败，请检查网络';
       return false;
     }
   }
