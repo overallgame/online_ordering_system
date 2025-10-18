@@ -16,9 +16,8 @@ export struct PaymentSuccessPage {
     this.orderId = params?.orderId || '';
     this.orderAmount = params?.totalAmount || 0;
 
-    // 获取订单详情
-    const orderResult = this.orderViewModel.getOrder(this.orderId);
-    this.order = orderResult || null;
+    // 获取当前订单详情
+    this.order = this.orderViewModel.getCurrentOrder();
   }
 
   build() {
