@@ -15,18 +15,22 @@ export class CartRepository {
     }
     return CartRepository.instance;
   }
-  
-  // ==================== 网络请求方法 ====================
-  
+
   // 查看购物车
   async getCartList(): Promise<Cart | null> {
     try {
-      const response: ApiResponse<ShoppingCartItem[]> = await this.apiClient.get(
+      interface CartListApiResponse {
+        code: number;
+        data: ShoppingCartItem[];
+        msg: string;
+      }
+
+      const response: ApiResponse<CartListApiResponse> = await this.apiClient.get(
         ApiEndpoints.CART_LIST
       );
       
-      if (response.success && response.data) {
-        return CartDataConverter.convertApiDataToCart(response.data);
+      if (response.success && response.data && response.data.data) {
+        return CartDataConverter.convertApiDataToCart(response.data.data);
       }
       
       console.warn('Failed to get cart list:', response.error);
@@ -46,12 +50,18 @@ export class CartRepository {
         dishFlavor
       };
 
-      const response: ApiResponse<string> = await this.apiClient.post(
+      interface CartAddApiResponse {
+        code: number;
+        data: string;
+        msg: string;
+      }
+
+      const response: ApiResponse<CartAddApiResponse> = await this.apiClient.post(
         ApiEndpoints.CART_ADD, 
         requestData
       );
       
-      if (response.success) {
+      if (response.success && response.data) {
         console.log('Successfully added to cart');
         return true;
       } else {
@@ -73,12 +83,18 @@ export class CartRepository {
         dishFlavor
       };
 
-      const response: ApiResponse<string> = await this.apiClient.post(
+      interface CartRemoveApiResponse {
+        code: number;
+        data: string;
+        msg: string;
+      }
+
+      const response: ApiResponse<CartRemoveApiResponse> = await this.apiClient.post(
         ApiEndpoints.CART_REMOVE, 
         requestData
       );
       
-      if (response.success) {
+      if (response.success && response.data) {
         console.log('Successfully removed from cart');
         return true;
       } else {
@@ -94,11 +110,17 @@ export class CartRepository {
   // 清空购物车
   async clearCart(): Promise<boolean> {
     try {
-      const response: ApiResponse<string> = await this.apiClient.delete(
+      interface CartClearApiResponse {
+        code: number;
+        data: string;
+        msg: string;
+      }
+
+      const response: ApiResponse<CartClearApiResponse> = await this.apiClient.delete(
         ApiEndpoints.CART_CLEAR
       );
       
-      if (response.success) {
+      if (response.success && response.data) {
         console.log('Successfully cleared cart');
         return true;
       } else {
