@@ -13,12 +13,12 @@ export class AuthStateService {
 
   async checkLoginStatus(): Promise<boolean> {
     try {
+      // 先尝试加载当前用户数据
+      await this.appDataManager.loadCurrentUser();
+      
+      // 然后检查登录状态
       const isLoggedIn = this.appDataManager.isLoggedIn();
-
-      if (isLoggedIn) {
-        await this.appDataManager.loadCurrentUser();
-      }
-
+      
       return isLoggedIn;
     } catch (error) {
       console.error('Check login status error:', error);

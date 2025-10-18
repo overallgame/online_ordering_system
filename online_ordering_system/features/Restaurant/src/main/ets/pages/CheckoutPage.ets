@@ -440,7 +440,7 @@ export struct CheckoutPage {
       .margin({ bottom: 16 })
 
       Row() {
-        Text('立即支付')
+        Text('立即结算')
           .fontSize(18)
           .fontColor(Color.White)
           .fontWeight(FontWeight.Medium)
@@ -461,7 +461,7 @@ export struct CheckoutPage {
     .margin({ left: 16, right: 16, bottom: 16 })
   }
 
-  // 处理支付
+  // 处理结算
   private async handlePayment(): Promise<void> {
     if (!this.currentUser) {
       promptAction.showToast({
@@ -480,15 +480,16 @@ export struct CheckoutPage {
     }
 
     try {
-      const deliveryAddress = this.orderType === 'delivery' ? this.currentUser.address : undefined;
+      // 计算预计送达时间
       const estimatedDeliveryTime = this.isScheduled ? this.calculateScheduledDeliveryTime() : undefined;
-
+      
+      // 创建订单
       const orderResult = await this.orderViewModel.createOrder(
-        this.currentUser.userId,
         this.cartItems,
         this.orderType,
-        deliveryAddress,
-        estimatedDeliveryTime
+        this.orderType === 'delivery' ? this.currentUser.address : undefined,
+        estimatedDeliveryTime,
+        this.isScheduled ? '预约订单' : ''
       );
 
       if (!orderResult.success || !orderResult.order) {
@@ -499,31 +500,27 @@ export struct CheckoutPage {
         return;
       }
 
-      const paymentSuccess = await this.orderViewModel.payOrder(orderResult.order.orderId);
-      
-      if (paymentSuccess) {
-        promptAction.showToast({
-          message: '支付成功！',
-          duration: 2000
-        });
-
-        const paymentParams: PaymentSuccessParams = {
-          orderId: orderResult.order.orderId,
-          totalAmount: orderResult.order.finalAmount
-        };
-        this.showCheckout = false;
-        setTimeout(() => {
-          this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
-        }, 300);
-      } else {
-        promptAction.showToast({
-          message: '支付失败，请重试',
-          duration: 2000
-        });
-      }
-    } catch (error) {
+      // 订单创建成功，直接显示成功信息（已自动标记为已支付）
       promptAction.showToast({
-        message: '支付处理出错',
+        message: '订单创建成功！',
+        duration: 2000
+      });
+
+      // 清空购物车
+      await this.cartViewModel.clearCart();
+
+      const paymentParams: PaymentSuccessParams = {
+        orderId: orderResult.order.orderId,
+        totalAmount: orderResult.order.finalAmount
+      };
+      this.showCheckout = false;
+      setTimeout(() => {
+        this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
+      }, 300);
+    } catch (error) {
+      console.error('Order processing error:', error);
+      promptAction.showToast({
+        message: '订单处理出错',
         duration: 2000
       });
     }

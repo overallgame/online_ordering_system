@@ -31,7 +31,7 @@ export class ApiClient {
       if (useToken && this.appDataManager.isLoggedIn()) {
         const token = this.appDataManager.getToken();
         if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+          headers['Utoken'] = `${token}`;
         }
       }
 
