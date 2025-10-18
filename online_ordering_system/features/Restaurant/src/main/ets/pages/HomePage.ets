@@ -45,6 +45,7 @@ export struct HomePage {
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
 
   aboutToAppear() {
+    console.log("wwww");
     this.breakpointSystem.register();
     this.loadCategories();
   }
@@ -55,7 +56,7 @@ export struct HomePage {
 
   private async loadCategories() {
     this.categories = await this.viewModel.loadCategories(1);
-    console.log(this.categories.toString()+"wwwwww")
+    console.log(this.categories[0].name+"wwwwww")
     if (this.categories.length > 0) {
       this.selectedCategory = this.categories[0];
       await this.loadInitial();

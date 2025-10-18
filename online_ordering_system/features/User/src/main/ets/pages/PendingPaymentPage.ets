@@ -74,11 +74,11 @@ export struct PendingPaymentPage {
   buildOrderList() {
     if (this.orderViewModel.isRefreshing) {
       this.buildLoadingView()
-    } else if (this.orderViewModel.orders.length === 0) {
+    } else if (this.getPendingPaymentOrders().length === 0) {
       this.buildEmptyView()
     } else {
       List() {
-        ForEach(this.orderViewModel.orders, (order: Order) => {
+        ForEach(this.getPendingPaymentOrders(), (order: Order) => {
           ListItem() {
             OrderItemComponent({
               order: order,
@@ -152,6 +152,12 @@ export struct PendingPaymentPage {
   showPayOrderDialog(order: Order) {
     this.selectedOrder = order;
     this.showPayDialog = true;
+  }
+
+  getPendingPaymentOrders(): Order[] {
+    return this.orderViewModel.orders.filter(order =>
+    order.status === OrderStatus.PENDING
+    );
   }
 
   async handlePayOrder() {

@@ -32,7 +32,7 @@ export class OrderViewModel {
 
   constructor() {
     this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
-    //OrderServiceTest.runAllTests();
+    OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
   }
 

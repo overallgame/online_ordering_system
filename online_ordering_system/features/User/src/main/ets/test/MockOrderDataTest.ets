@@ -1,5 +1,5 @@
 import { MockOrderDataGenerator } from '../util/MockOrderDataGenerator';
-import { OrderStatus } from 'common';
+import { OrderStatus,Order } from 'common';
 
 /**
  * 模拟订单数据测试类
@@ -18,7 +18,7 @@ export class MockOrderDataTest {
     console.log(`生成了 ${orders.length} 个模拟订单`);
     
     // 验证订单数据
-    orders.forEach((order, index) => {
+    orders.forEach((order: Order, index: number) => {
       console.log(`订单 ${index + 1}:`);
       console.log(`  - 订单ID: ${order.orderId}`);
       console.log(`  - 状态: ${order.status}`);
@@ -40,7 +40,7 @@ export class MockOrderDataTest {
     });
     
     console.log('订单状态分布:');
-    Object.entries(statusCounts).forEach((entry) => {
+    Object.entries(statusCounts).forEach((entry: [string, number]) => {
       const status = entry[0];
       const count = entry[1];
       console.log(`  ${status}: ${count} 个`);

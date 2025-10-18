@@ -57,6 +57,8 @@ struct Index {
       if (loginStatusFromPrefs) {
         this.isLogin = true;
         console.log('User logged in (from preferences) - navigating to main content');
+      }else{
+        this.mainPathStack.pushPathByName('login', null);
       }
     } catch (error) {
       console.error('Check auth status error:', error);
