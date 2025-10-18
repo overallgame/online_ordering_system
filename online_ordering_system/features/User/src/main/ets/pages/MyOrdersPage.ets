@@ -2,14 +2,14 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus ,PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-import { OrderStatusSimulator } from '../service/OrderStatusSimulator';
+
 
 /**
  * 我的订单页面
  */
 @Component
 export struct MyOrdersPage {
-  @Link orderViewModel: OrderViewModel;
+  @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
   @State showCancelDialog: boolean = false;
   @State showDeleteDialog: boolean = false;
@@ -60,26 +60,7 @@ export struct MyOrdersPage {
         .fontColor('#000000')
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
-      
-      Image($r('app.media.setting'))
-        .width(24)
-        .height(24)
-        .onClick(() => {
-          this.refreshOrders();
-        })
 
-      // 状态模拟按钮
-      Button(this.isSimulating ? '停止模拟' : '开始模拟')
-        .fontSize(12)
-        .fontColor('#FFFFFF')
-        .backgroundColor(this.isSimulating ? '#FF6B35' : '#2196F3')
-        .borderRadius(4)
-        .height(28)
-        .padding({ left: 8, right: 8 })
-        .margin({ left: 8 })
-        .onClick(() => {
-          this.toggleSimulation();
-        })
 
     }
     .width('100%')
@@ -172,34 +153,39 @@ export struct MyOrdersPage {
     .justifyContent(FlexAlign.Center)
   }
 
-  // 事件处理方法
-  async refreshOrders() {
-    await this.orderViewModel.refreshOrders();
-  }
 
 
   async loadMoreOrders() {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  showCancelOrderDialog(order: Order) {
+  async showCancelOrderDialog(order: Order) {
     this.selectedOrder = order;
     this.showCancelDialog = true;
+    await this.orderViewModel.cancelOrder(order.orderId);
   }
 
   showDeleteOrderDialog(order: Order) {
     this.selectedOrder = order;
     this.showDeleteDialog = true;
+
   }
 
-  showPayOrderDialog(order: Order) {
+  async  showPayOrderDialog(order: Order) {
     this.selectedOrder = order;
     this.showPayDialog = true;
+    await this.orderViewModel.payOrder(order.totalAmount.toString(),1,order);
   }
 
-  showRemindOrderDialog(order: Order) {
+  async  showRemindOrderDialog(order: Order) {
     this.selectedOrder = order;
     this.showRemindDialog = true;
+    const success=await this.orderViewModel.remindOrder(order.orderId);
+    if (success) {
+      this.showToast('催单成功，商家会尽快处理');
+    } else {
+      this.showToast('催单失败，请重试');
+    }
   }
 
   showRepeatOrderDialog(order: Order) {
@@ -207,48 +193,48 @@ export struct MyOrdersPage {
     this.showRepeatDialog = true;
   }
 
-  async handleCancelOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.cancelOrder(this.selectedOrder.orderId);
-    this.showCancelDialog = false;
-    
-    if (success) {
-      this.showToast('订单已取消');
-    } else {
-      this.showToast('取消订单失败，请重试');
-    }
-  }
+  // async handleCancelOrder() {
+  //   if (!this.selectedOrder) return;
+  //
+  //   const success = await this.orderViewModel.cancelOrder(this.selectedOrder.orderId);
+  //   this.showCancelDialog = false;
+  //
+  //   if (success) {
+  //     this.showToast('订单已取消');
+  //   } else {
+  //     this.showToast('取消订单失败，请重试');
+  //   }
+  // }
 
-  async handleDeleteOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.deleteOrder(this.selectedOrder.orderId);
-    this.showDeleteDialog = false;
-    
-    if (success) {
-      this.showToast('订单已删除');
-    } else {
-      this.showToast('删除订单失败，请重试');
-    }
-  }
+  // async handleDeleteOrder() {
+  //   if (!this.selectedOrder) return;
+  //
+  //   const success = await this.orderViewModel.deleteOrder(this.selectedOrder.orderId);
+  //   this.showDeleteDialog = false;
+  //
+  //   if (success) {
+  //     this.showToast('订单已删除');
+  //   } else {
+  //     this.showToast('删除订单失败，请重试');
+  //   }
+  // }
 
-  async handlePayOrder() {
-    if (!this.selectedOrder) return;
-    
-    const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
-    this.showPayDialog = false;
-    
-    if (result.success) {
-      this.showToast('支付成功');
-      if (result.paymentUrl) {
-        // 这里可以打开支付页面
-        console.log('支付URL:', result.paymentUrl);
-      }
-    } else {
-      this.showToast('支付失败，请重试');
-    }
-  }
+  // async handlePayOrder() {
+  //   if (!this.selectedOrder) return;
+  //
+  //   const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
+  //   this.showPayDialog = false;
+  //
+  //   if (result.success) {
+  //     this.showToast('支付成功');
+  //     if (result.paymentUrl) {
+  //       // 这里可以打开支付页面
+  //       console.log('支付URL:', result.paymentUrl);
+  //     }
+  //   } else {
+  //     this.showToast('支付失败，请重试');
+  //   }
+  // }
 
   async handleRemindOrder() {
     if (!this.selectedOrder) return;
@@ -280,32 +266,5 @@ export struct MyOrdersPage {
     ToastComponent.getInstance().show(message);
   }
 
-  // 切换状态模拟
-  toggleSimulation() {
-    if (this.isSimulating) {
-      this.stopSimulation();
-    } else {
-      this.startSimulation();
-    }
-  }
 
-  // 开始状态模拟
-  startSimulation() {
-    if (this.orderViewModel.orders.length === 0) {
-      this.showToast('请先加载订单数据');
-      return;
-    }
-
-    const orderIds = this.orderViewModel.orders.map(order => order.orderId);
-    OrderStatusSimulator.getInstance().startSimulation(orderIds);
-    this.isSimulating = true;
-    this.showToast('开始模拟订单状态变化');
-  }
-
-  // 停止状态模拟
-  stopSimulation() {
-    OrderStatusSimulator.getInstance().stopSimulation();
-    this.isSimulating = false;
-    this.showToast('停止模拟订单状态变化');
-  }
 }

@@ -27,8 +27,10 @@ export class UserViewModel {
       const currentUser = AppDataManager.getInstance().getCurrentUser();
       if (currentUser) {
         this.user = currentUser;
+        console.error(this.user.avatar+"ttt");
       } else {
         // 只有在没有用户数据时才创建默认用户
+        console.error("lllllllllllllkkk");
         this.user = new User();
         this.user.userId = "U123456789"; // 必填，唯一用户ID
         this.user.username = "未设置";     // 必填，用户昵称
@@ -156,7 +158,7 @@ export class UserViewModel {
     newUser.username = user.username || '';
     newUser.phone = user.phone || '';
     newUser.email = user.email || '';
-    newUser.avatar = user.avatar;
+    newUser.avatar = user.avatar || '';
     newUser.address = user.address || '';
     newUser.createTime = user.createTime || 0;
     newUser.isLoggedIn = user.isLoggedIn || false;

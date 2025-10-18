@@ -1,4 +1,5 @@
 import { UserViewModel } from '../viewmodel/UserViewModel';
+import { AvatarSelectDialog } from '../components/AvatarSelectDialog';
 
 /**
  * 用户信息头部View组件
@@ -7,6 +8,7 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 export struct UserHeaderView {
   @Prop userViewModel: UserViewModel;
   @Consume('navStack') navStack: NavPathStack;
+
 
   build() {
     Stack() {
@@ -18,13 +20,15 @@ export struct UserHeaderView {
       // 用户信息内容
       Row() {
         // 用户头像
-        Image($r('app.media.default_avatar'))
-          .width(60)
-          .height(60)
-          .borderRadius(30)
-          .border({ width: 2, color: '#FFFFFF' })
-          .shadow({ radius: 4, color: '#00000020', offsetX: 0, offsetY: 2 })
-        
+        Stack() {
+          Image(this.userViewModel.user?.avatar ? this.userViewModel.user.avatar : $r('app.media.default_avatar'))
+            .width(60)
+            .height(60)
+            .borderRadius(30)
+            .border({ width: 2, color: '#FFFFFF' })
+            .shadow({ radius: 4, color: '#00000020', offsetX: 0, offsetY: 2 })
+            .objectFit(ImageFit.Cover)
+        }
         // 用户信息
         Column() {
           Text(this.userViewModel.user?.username?this.userViewModel.user.username:"XXX")
@@ -78,5 +82,18 @@ export struct UserHeaderView {
     }
     .width('100%')
     .height(120)
+
+
+  }
+
+  /**
+   * 更新头像
+   */
+  private updateAvatar(avatarUri: string) {
+    if (this.userViewModel.user) {
+      this.userViewModel.user.avatar = avatarUri;
+      // 这里可以添加保存到服务器的逻辑
+      console.log('头像已更新:', avatarUri);
+    }
   }
 }

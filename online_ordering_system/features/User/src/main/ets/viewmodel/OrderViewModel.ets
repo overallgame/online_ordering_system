@@ -33,7 +33,7 @@ export class OrderViewModel implements OrderStatusListener {
 
   constructor() {
     this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
-    OrderServiceTest.runAllTests();
+    //OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
     
     // 注册订单状态监听器
@@ -178,9 +178,9 @@ export class OrderViewModel implements OrderStatusListener {
   /**
    * 支付订单
    */
-  async payOrder(orderNumber: string, payMethod: number): Promise<PaymentResult> {
+  async payOrder(orderNumber: string, payMethod: number,order:Order): Promise<PaymentResult> {
     try {
-      const response = await this.orderService.payOrder(orderNumber, payMethod);
+      const response = await this.orderService.payOrder(orderNumber, payMethod,order);
       
       if (response.success) {
         // 更新本地订单状态

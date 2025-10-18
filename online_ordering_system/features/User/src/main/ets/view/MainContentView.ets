@@ -6,18 +6,25 @@ import { UserViewModel } from '../viewmodel/UserViewModel';
 @Component
 export struct MainContentView {
   @ObjectLink userViewModel: UserViewModel;
+  @Consume('navStack') navStack: NavPathStack;
 
   build() {
     Column() {
-      // 这里可以添加更多内容，比如优惠券、推荐等
-      Text('更多功能即将上线...')
-        .fontSize(16)
-        .fontColor('#999999')
-        .margin({ top: 50 })
+
+      
+      // 其他功能区域
+      Column() {
+        Text('更多功能即将上线...')
+          .fontSize(16)
+          .fontColor('#999999')
+          .margin({ top: 50 })
+      }
+      .width('100%')
+      .layoutWeight(1)
     }
     .width('100%')
     .layoutWeight(1)
-    .backgroundColor('#FFFFFF')
+    .backgroundColor('#F5F5F5')
     .margin({ top: 8 })
   }
 }

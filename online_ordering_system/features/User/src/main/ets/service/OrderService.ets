@@ -143,23 +143,7 @@ export class OrderService {
     try {
       // 生成所有模拟订单
       let allMockOrders = MockOrderDataGenerator.generateMockOrders();
-      
-      // // 如果指定了状态筛选，进行筛选
-      // if (status !== undefined) {
-      //   const statusMap: Record<number, OrderStatus> = {
-      //     1: OrderStatus.PENDING,      // 待付款
-      //     2: OrderStatus.CONFIRMED,    // 已付款
-      //     3: OrderStatus.PREPARING,    // 制作中
-      //     4: OrderStatus.READY,        // 待取餐
-      //     5: OrderStatus.COMPLETED,    // 已完成
-      //     6: OrderStatus.CANCELLED     // 已取消
-      //   };
-      //   const targetStatus = statusMap[status];
-      //   if (targetStatus) {
-      //     allMockOrders = allMockOrders.filter(order => order.status === targetStatus);
-      //   }
-      // }
-      
+
       // 分页处理
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
@@ -279,7 +263,7 @@ export class OrderService {
    * @param payMethod 支付方式
    * @returns 支付结果
    */
-  async payOrder(orderNumber: string, payMethod: number): Promise<ApiResponse<PaymentResult>> {
+  async payOrder(orderNumber: string, payMethod: number,order:Order): Promise<ApiResponse<PaymentResult>> {
     try {
       const payOrderData: PayOrderRequest = {
         orderNumber,
@@ -290,7 +274,7 @@ export class OrderService {
       if (response.success) {
         console.log('支付订单成功');
         // 通知订单状态变化
-        OrderStatusManager.getInstance().updateOrderStatus(orderNumber, OrderStatus.CONFIRMED);
+        OrderStatusManager.getInstance().updateOrderStatus(order.orderId, OrderStatus.CONFIRMED);
         return response;
       } else {
         console.error('支付订单失败:', response.error);

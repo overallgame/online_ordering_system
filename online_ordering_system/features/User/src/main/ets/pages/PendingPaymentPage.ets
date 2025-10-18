@@ -56,13 +56,7 @@ export struct PendingPaymentPage {
         .fontColor('#000000')
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
-      
-      Image($r('app.media.setting'))
-        .width(24)
-        .height(24)
-        .onClick(() => {
-          this.refreshOrders();
-        })
+
     }
     .width('100%')
     .height(56)
@@ -78,16 +72,21 @@ export struct PendingPaymentPage {
       this.buildEmptyView()
     } else {
       List() {
-        ForEach(this.getPendingPaymentOrders(), (order: Order) => {
-          ListItem() {
-            OrderItemComponent({
-              order: order,
-              mode: 'payment',
-              onPay: () => {
-                this.showPayOrderDialog(order);
-              }
-            })
+        ForEach(this.orderViewModel.orders, (order: Order) => {
+          if(order.status==OrderStatus.PENDING)
+          {
+            ListItem() {
+              OrderItemComponent({
+                order: order,
+                mode: 'payment',
+                onPay: () => {
+                  this.showPayOrderDialog(order);
+                }
+              })
+            }
           }
+
+
         })
       }
       .width('100%')
@@ -141,9 +140,6 @@ export struct PendingPaymentPage {
   }
 
   // 事件处理方法
-  async refreshOrders() {
-    await this.orderViewModel.refreshOrders();
-  }
 
   async loadMoreOrders() {
     await this.orderViewModel.loadMoreOrders();
@@ -160,20 +156,20 @@ export struct PendingPaymentPage {
     );
   }
 
-  async handlePayOrder() {
-    if (!this.selectedOrder) return;
-    
-    const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
-    this.showPayDialog = false;
-    
-    if (result.success) {
-      this.showToast('支付成功');
-      // 刷新订单列表
-      await this.refreshOrders();
-    } else {
-      this.showToast('支付失败，请重试');
-    }
-  }
+  // async handlePayOrder() {
+  //   if (!this.selectedOrder) return;
+  //
+  //   const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
+  //   this.showPayDialog = false;
+  //
+  //   if (result.success) {
+  //     this.showToast('支付成功');
+  //     // 刷新订单列表
+  //     await this.refreshOrders();
+  //   } else {
+  //     this.showToast('支付失败，请重试');
+  //   }
+  // }
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);
