@@ -29,7 +29,7 @@ export class ApiClient {
       };
 
       if (useToken && this.appDataManager.isLoggedIn()) {
-        const token = this.appDataManager.getToken();
+        const token = await this.appDataManager.getTokenFromPreferences();
         if (token) {
           headers['Utoken'] = `${token}`;
         }

@@ -2,7 +2,6 @@ import { BreakpointSystem } from 'utils';
 import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { drawing } from '@kit.ArkGraphics2D';
 import { UserPage } from 'user';
-import { AuthStateService } from '../service/AuthStateService';
 import { LoginPage, RegisterPage } from 'authentication';
 import { HomePage } from 'restaurant';
 import { AppDataManager } from 'common';
@@ -17,7 +16,6 @@ struct Index {
   @Provide('mainPathStack') mainPathStack: NavPathStack = new NavPathStack();
   private tabsController: TabsController = new TabsController();
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
-  private authStateService: AuthStateService = AuthStateService.getInstance();
   private appDataManager: AppDataManager = AppDataManager.getInstance();
 
   aboutToAppear() {
@@ -51,16 +49,19 @@ struct Index {
 
   private async checkAuthStatus(): Promise<void> {
     try {
-      const loginStatus = await this.authStateService.checkLoginStatus();
-      if (!loginStatus) {
-        this.isLogin = false;
-        this.mainPathStack.pushPathByName('login', null);
-      } else {
+      console.log('Checking authentication status...');
+
+      const loginStatusFromPrefs = await this.appDataManager.isLoggedInFromPreferences();
+      console.log('Login status from preferences:', loginStatusFromPrefs);
+      
+      if (loginStatusFromPrefs) {
         this.isLogin = true;
+        console.log('User logged in (from preferences) - navigating to main content');
       }
     } catch (error) {
       console.error('Check auth status error:', error);
       this.isLogin = false;
+      console.log('Error occurred - navigating to login page');
       this.mainPathStack.pushPathByName('login', null);
     }
   }
