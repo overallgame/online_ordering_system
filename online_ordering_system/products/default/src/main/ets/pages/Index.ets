@@ -106,10 +106,6 @@ struct Index {
       }.tabBar(this.tabBarBuilder("首页", 0, $r("app.media.home"), $r("app.media.home_active")))
 
       TabContent() {
-        // 订单内容
-      }.tabBar(this.tabBarBuilder("订单", 1, $r("app.media.order"), $r("app.media.order_active")))
-
-      TabContent() {
         UserPage()
       }.tabBar(this.tabBarBuilder("我", 2, $r("app.media.mine"), $r("app.media.mine_active")))
     }

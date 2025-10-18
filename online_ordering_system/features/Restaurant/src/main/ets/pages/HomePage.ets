@@ -1,4 +1,4 @@
-import { Category, Dish } from 'common';
+import { AppDataManager, Category, Dish } from 'common';
 import { DishViewModel } from '../viewModel/DishViewModel';
 import { LoadStatus } from '../util/DataState';
 import { BreakpointSystem } from 'utils';
@@ -45,18 +45,55 @@ export struct HomePage {
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
 
   aboutToAppear() {
-    console.log("wwww");
     this.breakpointSystem.register();
-    this.loadCategories();
+    this.checkLoginAndLoadCategories();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
   }
 
+  private async checkLoginAndLoadCategories() {
+    try {
+      const appDataManager = AppDataManager.getInstance();
+
+      if (appDataManager.isLoggedIn()) {
+        console.log('HomePage: 用户已登录，加载真实分类数据');
+        await this.loadCategories();
+      } else {
+        console.log('HomePage: 用户未登录，使用默认分类数据');
+        this.categories = this.getDefaultCategories();
+        if (this.categories.length > 0) {
+          this.selectedCategory = this.categories[0];
+          await this.loadInitial();
+        }
+      }
+    } catch (error) {
+      console.error('HomePage: 检查登录状态失败:', error);
+      this.categories = this.getDefaultCategories();
+      if (this.categories.length > 0) {
+        this.selectedCategory = this.categories[0];
+        await this.loadInitial();
+      }
+    }
+  }
+
+  private getDefaultCategories(): Category[] {
+    const defaultCategories: Array<string> = ['热菜', '凉菜', '汤品', '主食'];
+
+    return defaultCategories.map((name: string, index: number) => {
+      const category = new Category();
+      category.id = 101 + index;
+      category.name = name;
+      category.type = 1;
+      category.sort = index;
+      category.status = 1;
+      return category;
+    });
+  }
+
   private async loadCategories() {
     this.categories = await this.viewModel.loadCategories(1);
-    console.log(this.categories[0].name+"wwwwww")
     if (this.categories.length > 0) {
       this.selectedCategory = this.categories[0];
       await this.loadInitial();
