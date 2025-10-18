@@ -29,6 +29,13 @@ export class MockOrderDataGenerator {
     // 生成外卖订单
     orders.push(MockOrderDataGenerator.createMockDeliveryOrder('ORDER009', OrderStatus.READY, PaymentStatus.PAID, '水煮鱼', 45.00, '2024-01-11 21:00:00'));
     
+    // 生成更多多菜品订单
+    orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER010', OrderStatus.COMPLETED, PaymentStatus.PAID, '2024-01-10 19:30:00'));
+    orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER011', OrderStatus.CONFIRMED, PaymentStatus.PAID, '2024-01-09 18:15:00'));
+    
+    // 生成大型多菜品订单
+    orders.push(MockOrderDataGenerator.createMockLargeOrder('ORDER012', OrderStatus.PREPARING, PaymentStatus.PAID, '2024-01-08 20:00:00'));
+    
     return orders;
   }
   
@@ -181,7 +188,7 @@ export class MockOrderDataGenerator {
     ];
     
     let totalAmount = 0;
-    order.items = dishes.map((dish, index) => {
+    order.items = dishes.map((dish: DishInfo, index: number) => {
       const orderItem = new OrderItem();
       orderItem.itemId = `${orderId}_${index + 1}`;
       orderItem.quantity = dish.quantity;
@@ -270,6 +277,82 @@ export class MockOrderDataGenerator {
     
     orderItem.dish = dish;
     order.items = [orderItem];
+    
+    return order;
+  }
+  
+  /**
+   * 创建大型多菜品订单
+   */
+  private static createMockLargeOrder(
+    orderId: string, 
+    status: OrderStatus, 
+    paymentStatus: PaymentStatus, 
+    orderTime: string
+  ): Order {
+    const order = new Order();
+    order.orderId = orderId;
+    order.userId = '100';
+    order.restaurantId = '1';
+    order.status = status;
+    order.paymentStatus = paymentStatus;
+    order.paymentMethod = PaymentMethod.WECHAT;
+    order.orderType = OrderType.DINE_IN;
+    order.createTime = MockOrderDataGenerator.parseTimeString(orderTime);
+    order.updateTime = order.createTime;
+    order.deliveryAddress = '北京市朝阳区三里屯街道';
+    order.customerNote = '家庭聚餐，请尽快制作';
+    
+    // 创建多个订单项
+    interface DishInfo {
+      name: string;
+      price: number;
+      quantity: number;
+      note?: string;
+    }
+    
+    const dishes: DishInfo[] = [
+      { name: '宫保鸡丁', price: 25.00, quantity: 2, note: '微辣' },
+      { name: '麻婆豆腐', price: 18.00, quantity: 1, note: '中辣' },
+      { name: '红烧肉', price: 35.00, quantity: 1, note: '少油' },
+      { name: '糖醋里脊', price: 28.00, quantity: 1, note: '酸甜' },
+      { name: '鱼香肉丝', price: 22.00, quantity: 1, note: '微辣' },
+      { name: '米饭', price: 3.00, quantity: 4, note: '' },
+      { name: '蛋花汤', price: 8.00, quantity: 1, note: '清淡' }
+    ];
+    
+    let totalAmount = 0;
+    order.items = dishes.map((dish: DishInfo, index: number) => {
+      const orderItem = new OrderItem();
+      orderItem.itemId = `${orderId}_${index + 1}`;
+      orderItem.quantity = dish.quantity;
+      orderItem.unitPrice = dish.price;
+      orderItem.totalPrice = dish.price * dish.quantity;
+      orderItem.note = dish.note || '';
+      
+      const dishObj = new Dish();
+      dishObj.dishId = `${orderId}_dish_${index + 1}`;
+      dishObj.name = dish.name;
+      dishObj.price = dish.price;
+      dishObj.image = MockOrderDataGenerator.getRandomDishImage();
+      dishObj.description = `${dish.name}，经典菜品`;
+      dishObj.category = dish.name === '米饭' ? '主食' : (dish.name === '蛋花汤' ? '汤品' : '川菜');
+      dishObj.isAvailable = true;
+      dishObj.stock = 100;
+      dishObj.tags = dish.name === '米饭' ? ['主食'] : (dish.name === '蛋花汤' ? ['汤品'] : ['热销']);
+      dishObj.preparationTime = dish.name === '米饭' ? 5 : (dish.name === '蛋花汤' ? 10 : 15);
+      dishObj.rating = 4.2;
+      dishObj.reviewCount = 95;
+      
+      orderItem.dish = dishObj;
+      totalAmount += orderItem.totalPrice;
+      
+      return orderItem;
+    });
+    
+    order.totalAmount = totalAmount;
+    order.finalAmount = totalAmount;
+    order.discountAmount = 0;
     
     return order;
   }

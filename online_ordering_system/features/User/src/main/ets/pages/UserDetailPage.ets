@@ -1,13 +1,15 @@
 import { UserViewModel } from '../viewmodel/UserViewModel';
 import { User, UserPreferences, AppDataManager } from 'common';
 import { ToastComponent } from '../components/ToastComponent';
-import {InfoItem} from '../view/InfoItemView'
+import { InfoItem } from '../view/InfoItemView';
+import { AvatarUploadService } from '../service/AvatarUploadService';
 @Component
 export struct UserDetailPage {
   @Link userViewModel: UserViewModel;
   @Consume('navStack') navStack: NavPathStack;
   @State isEditing: boolean = false;
   @State editUser: User = new User();
+  @State isAvatarDialogVisible: boolean = false;
   // @State showPhoneDialog: boolean = false;
   // @State showEmailDialog: boolean = false;
   // @State showAddressDialog: boolean = false;
@@ -42,6 +44,10 @@ export struct UserDetailPage {
           this.buildUserDetailContent()
         }
 
+        // 头像选择对话框
+        if (this.isAvatarDialogVisible) {
+          this.buildAvatarSelectDialog()
+        }
       }
       .width('100%')
       .height('100%')
@@ -112,36 +118,31 @@ export struct UserDetailPage {
   @Builder
   buildAvatarSection() {
     Column() {
-      Stack() {
-        Image($r('app.media.default_avatar'))
+      Column() {
+        Image(this.editUser.avatar ? this.editUser.avatar : $r('app.media.default_avatar'))
           .width(100)
           .height(100)
           .borderRadius(50)
           .border({ width: 3, color: '#FFFFFF' })
           .shadow({ radius: 8, color: '#00000020', offsetX: 0, offsetY: 4 })
-        
-        if (this.isEditing) {
-          Image($r('app.media.setting'))
-            .width(32)
-            .height(32)
-            .backgroundColor('#00000080')
-            .borderRadius(16)
-            .position({ x: 68, y: 68 })
-            .onClick(() => {
-              this.selectAvatar();
-            })
+          .objectFit(ImageFit.Cover)
+        if(this.isEditing)
+        {
+          Text('点击更换头像')
+            .fontSize(14)
+            .fontColor('#666666')
+            .margin({ top: 8 })
         }
+
+
       }
+      .onClick(() => {
+        if (this.isEditing) {
+          this.selectAvatar();
+        }
+      })
       
-      Text('点击更换头像')
-        .fontSize(14)
-        .fontColor('#666666')
-        .margin({ top: 8 })
-        .onClick(() => {
-          if (this.isEditing) {
-            this.selectAvatar();
-          }
-        })
+
     }
     .width('100%')
     .padding({ top: 20, bottom: 20 })
@@ -331,7 +332,142 @@ export struct UserDetailPage {
   }
 
   selectAvatar() {
-    //this.showToast('头像选择功能开发中');
+    this.isAvatarDialogVisible = true;
+  }
+
+  /**
+   * 构建头像选择对话框
+   */
+  @Builder
+  buildAvatarSelectDialog() {
+    Stack() {
+      // 半透明背景
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#000000')
+        .opacity(0.5)
+        .onClick(() => {
+          this.isAvatarDialogVisible = false;
+        })
+
+      // 底部对话框
+      Column() {
+        // 标题
+        Text('选择头像')
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#000000')
+          .margin({ bottom: 20 })
+
+        // 选项按钮
+        Column() {
+          // 从相册选择
+          Row() {
+            Text('📷')
+              .fontSize(24)
+              .margin({ right: 12 })
+            
+            Text('从相册选择')
+              .fontSize(16)
+              .fontColor('#000000')
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .height(50)
+          .padding({ left: 16, right: 16 })
+          .backgroundColor('#FFFFFF')
+          .borderRadius(8)
+          .onClick(() => {
+            this.selectFromGallery();
+          })
+
+          // 拍照
+          Row() {
+            Text('📸')
+              .fontSize(24)
+              .margin({ right: 12 })
+            
+            Text('拍照')
+              .fontSize(16)
+              .fontColor('#000000')
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .height(50)
+          .padding({ left: 16, right: 16 })
+          .backgroundColor('#FFFFFF')
+          .borderRadius(8)
+          .margin({ top: 12 })
+          .onClick(() => {
+            this.takePhoto();
+          })
+
+          // 取消按钮
+          Text('取消')
+            .fontSize(16)
+            .fontColor('#666666')
+            .width('100%')
+            .height(50)
+            .textAlign(TextAlign.Center)
+            .margin({ top: 20 })
+            .onClick(() => {
+              this.isAvatarDialogVisible = false;
+            })
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .padding(20)
+      .backgroundColor('#FFFFFF')
+      .borderRadius({ topLeft: 12, topRight: 12 })
+      .position({ x: 0, y: '60%' })
+      .shadow({ radius: 10, color: '#00000020', offsetX: 0, offsetY: -4 })
+    }
+    .width('100%')
+    .height('100%')
+    .position({ x: 0, y: 0 })
+    .zIndex(1000)
+  }
+
+  /**
+   * 从相册选择头像
+   */
+  async selectFromGallery() {
+    try {
+      const avatarUploadService = AvatarUploadService.getInstance();
+      const avatarUri = await avatarUploadService.selectAndUploadAvatar();
+      
+      if (avatarUri) {
+        this.editUser.avatar = avatarUri;
+        this.isAvatarDialogVisible = false;
+        this.showToast('头像已更新');
+      }
+    } catch (error) {
+      console.error('选择头像失败:', error);
+      this.showToast('选择头像失败');
+    }
+  }
+
+  /**
+   * 拍照选择头像
+   */
+  async takePhoto() {
+    try {
+      const avatarUploadService = AvatarUploadService.getInstance();
+      const avatarUri = await avatarUploadService.takePhoto();
+      
+      if (avatarUri) {
+        this.editUser.avatar = avatarUri;
+        this.isAvatarDialogVisible = false;
+        this.showToast('头像已更新');
+      } else {
+        this.showToast('拍照功能暂未实现');
+      }
+    } catch (error) {
+      console.error('拍照失败:', error);
+      this.showToast('拍照失败');
+    }
   }
 
   formatDate(timestamp: number): string {

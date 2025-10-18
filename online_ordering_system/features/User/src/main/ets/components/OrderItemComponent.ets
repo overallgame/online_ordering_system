@@ -1,6 +1,7 @@
 import { Order, OrderType } from 'common';
 import { OrderStatusTag } from './OrderStatusTag';
 import { OrderActionButtons } from './OrderActionButtons';
+import { ExpandableOrderDetails } from './ExpandableOrderDetails';
 
 /**
  * 订单项组件
@@ -33,45 +34,47 @@ export struct OrderItemComponent {
       .margin({ bottom: 12 })
 
       // 订单内容
-      Row() {
-        // 商品图片
-        Image($r('app.media.setting'))
-          .width(80)
-          .height(80)
-          .borderRadius(8)
-          .objectFit(ImageFit.Cover)
-          .margin({ right: 12 })
-
-        // 商品信息
-        Column() {
-          Text(this.getMainDishName())
-            .fontSize(16)
-            .fontColor('#000000')
-            .fontWeight(FontWeight.Medium)
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .margin({ bottom: 8 })
-
+      Column() {
+        // 订单基本信息
+        Row() {
           Text(`就餐方式: ${this.getOrderTypeText()}`)
-            .fontSize(14)
+            .fontSize(12)
             .fontColor('#666666')
-            .margin({ bottom: 4 })
+            .layoutWeight(1)
 
           Text(`订单时间: ${this.formatTime()}`)
             .fontSize(14)
             .fontColor('#666666')
-            .margin({ bottom: 8 })
+        }
+        .width('100%')
+        .margin({ bottom: 12 })
 
-          Text(`总计 ¥${this.order.finalAmount.toFixed(2)}`)
-            .fontSize(16)
+        // 订单详情列表
+        if (this.order.items.length > 0) {
+          ExpandableOrderDetails({ order: this.order })
+            .margin({ bottom: 12 })
+        }
+
+        // 订单总金额
+        Row() {
+          Text('订单总额')
+            .fontSize(14)
+            .fontColor('#666666')
+            .layoutWeight(1)
+
+          Text(`¥${this.order.finalAmount.toFixed(2)}`)
+            .fontSize(18)
             .fontColor('#FF6B35')
             .fontWeight(FontWeight.Bold)
         }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
+        .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
+        .padding({ top: 8, bottom: 8 })
+        .backgroundColor('#FFF8F5')
+        .borderRadius(6)
       }
       .width('100%')
-      .alignItems(VerticalAlign.Top)
+      .alignItems(HorizontalAlign.Start)
 
       // 操作按钮
       OrderActionButtons({
@@ -97,14 +100,17 @@ export struct OrderItemComponent {
       return '商品已下架';
     }
     
-    const mainItem = this.order.items[0];
-    if (mainItem.dish) {
-      return mainItem.dish.name;
-    } else if (mainItem.combo) {
-      return mainItem.combo.name;
+    if (this.order.items.length === 1) {
+      const mainItem = this.order.items[0];
+      if (mainItem.dish) {
+        return mainItem.dish.name;
+      } else if (mainItem.combo) {
+        return mainItem.combo.name;
+      }
+      return '未知商品';
+    } else {
+      return `共${this.order.items.length}件商品`;
     }
-    
-    return '未知商品';
   }
 
   private getOrderTypeText(): string {

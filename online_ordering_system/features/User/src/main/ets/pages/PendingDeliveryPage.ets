@@ -8,7 +8,7 @@ import { ToastComponent } from '../components/ToastComponent';
  */
 @Component
 export struct PendingDeliveryPage {
-  @Link orderViewModel: OrderViewModel;
+  @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
   @State showRemindDialog: boolean = false;
   @State selectedOrder: Order | null = null;
@@ -57,12 +57,7 @@ export struct PendingDeliveryPage {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
       
-      Image($r('app.media.setting'))
-        .width(24)
-        .height(24)
-        .onClick(() => {
-          this.refreshOrders();
-        })
+
     }
     .width('100%')
     .height(56)
@@ -78,16 +73,21 @@ export struct PendingDeliveryPage {
       this.buildEmptyView()
     } else {
       List() {
-        ForEach(this.getPendingDeliveryOrders(), (order: Order) => {
-          ListItem() {
-            OrderItemComponent({
-              order: order,
-              mode: 'delivery',
-              onRemind: () => {
-                this.showRemindOrderDialog(order);
-              }
-            })
+        ForEach(this.orderViewModel.orders, (order: Order) => {
+          if(order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PREPARING || order.status === OrderStatus.READY)
+          {
+            ListItem() {
+              OrderItemComponent({
+                order: order,
+                mode: 'delivery',
+                onRemind: () => {
+                  this.showRemindOrderDialog(order);
+                }
+              })
+            }
           }
+
+
         })
       }
       .width('100%')
@@ -150,10 +150,6 @@ export struct PendingDeliveryPage {
   }
 
   // 事件处理方法
-  async refreshOrders() {
-    await this.orderViewModel.refreshOrders();
-  }
-
   async loadMoreOrders() {
     await this.orderViewModel.loadMoreOrders();
   }

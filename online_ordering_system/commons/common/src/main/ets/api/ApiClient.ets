@@ -154,9 +154,6 @@ export class ApiEndpoints {
   static readonly ORDER_REPETITION = '/user/order/repetition';   // 再来一单
   static readonly ORDER_SUBMIT = '/user/order/submit';           // 用户下单
   static readonly ORDER_PAYMENT = '/user/order/payment';         // 订单支付
-  
-  // 管理端订单搜索接口 - 用于获取用户全部订单
-  static readonly ADMIN_ORDER_SEARCH = '/admin/order/conditionSearch';  // 订单搜索
 
   // 地址簿相关API
   static readonly ADDRESS_LIST = '/user/addressBook/list';       // 查询地址列表

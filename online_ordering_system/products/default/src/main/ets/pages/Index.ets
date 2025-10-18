@@ -76,7 +76,7 @@ struct Index {
         .width(30)
         .height(30)
         .color('#1890FF')
-      
+
       Text('正在加载...')
         .fontSize(14)
         .fontColor('#666666')
