@@ -65,6 +65,8 @@ export struct MyOrdersPage {
         .onClick(() => {
           this.refreshOrders();
         })
+      
+
     }
     .width('100%')
     .height(56)
@@ -160,6 +162,7 @@ export struct MyOrdersPage {
   async refreshOrders() {
     await this.orderViewModel.refreshOrders();
   }
+
 
   async loadMoreOrders() {
     await this.orderViewModel.loadMoreOrders();

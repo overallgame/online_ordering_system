@@ -32,7 +32,7 @@ export class OrderViewModel {
 
   constructor() {
     this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
-    OrderServiceTest.runAllTests();
+    //OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
   }
 
@@ -95,6 +95,7 @@ export class OrderViewModel {
         this.totalCount = response.data.total;
         this.hasMore = this.orders.length < this.totalCount;
         this.currentPage++;
+        console.log(`加载订单成功: 当前页${this.currentPage-1}, 订单数量${this.orders.length}, 总计${this.totalCount}`);
       } else {
         console.error('加载订单失败:', response.error);
       }

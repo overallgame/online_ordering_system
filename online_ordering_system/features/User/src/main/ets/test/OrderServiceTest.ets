@@ -85,7 +85,7 @@ export class OrderServiceTest {
       // 测试获取历史订单（这里会实际调用API，需要确保网络连接正常）
       const response = await orderService.getHistoryOrders(
         1,     // 页码
-        10,    // 每页数量
+        5,    // 每页数量
         1 // 状态筛选
       );
       
