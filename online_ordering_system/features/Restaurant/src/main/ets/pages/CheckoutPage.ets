@@ -440,19 +440,41 @@ export struct CheckoutPage {
       .margin({ bottom: 16 })
 
       Row() {
-        Text('立即结算')
-          .fontSize(18)
-          .fontColor(Color.White)
-          .fontWeight(FontWeight.Medium)
+        // 生成订单按钮
+        Row() {
+          Text('生成订单')
+            .fontSize(16)
+            .fontColor('#FF6B6B')
+            .fontWeight(FontWeight.Medium)
+        }
+        .width('48%')
+        .height(48)
+        .backgroundColor('#2A2A2A')
+        .borderRadius(8)
+        .border({ width: 1, color: '#FF6B6B' })
+        .justifyContent(FlexAlign.Center)
+        .onClick(() => {
+          this.handleCreateOrder(false); // false = 未支付
+        })
+
+        // 立即结算按钮
+        Row() {
+          Text('立即结算')
+            .fontSize(16)
+            .fontColor(Color.White)
+            .fontWeight(FontWeight.Medium)
+        }
+        .width('48%')
+        .height(48)
+        .backgroundColor('#FF6B6B')
+        .borderRadius(8)
+        .justifyContent(FlexAlign.Center)
+        .onClick(() => {
+          this.handleCreateOrder(true); // true = 已支付
+        })
       }
       .width('100%')
-      .height(48)
-      .backgroundColor('#FF6B6B')
-      .borderRadius(8)
-      .justifyContent(FlexAlign.Center)
-      .onClick(() => {
-        this.handlePayment();
-      })
+      .justifyContent(FlexAlign.SpaceBetween)
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 16, bottom: 16 })
@@ -461,8 +483,8 @@ export struct CheckoutPage {
     .margin({ left: 16, right: 16, bottom: 16 })
   }
 
-  // 处理结算
-  private async handlePayment(): Promise<void> {
+  // 处理订单创建
+  private async handleCreateOrder(isPaid: boolean): Promise<void> {
     if (!this.currentUser) {
       promptAction.showToast({
         message: '请先登录',
@@ -489,7 +511,8 @@ export struct CheckoutPage {
         this.orderType,
         this.orderType === 'delivery' ? this.currentUser.address : undefined,
         estimatedDeliveryTime,
-        this.isScheduled ? '预约订单' : ''
+        this.isScheduled ? '预约订单' : '',
+        isPaid // 传递支付状态
       );
 
       if (!orderResult.success || !orderResult.order) {
@@ -500,23 +523,36 @@ export struct CheckoutPage {
         return;
       }
 
-      // 订单创建成功，直接显示成功信息（已自动标记为已支付）
-      promptAction.showToast({
-        message: '订单创建成功！',
-        duration: 2000
-      });
+      // 根据支付状态显示不同的成功信息
+      if (isPaid) {
+        promptAction.showToast({
+          message: '订单创建成功并已支付！',
+          duration: 2000
+        });
+        
+        // 清空购物车
+        await this.cartViewModel.clearCart();
 
-      // 清空购物车
-      await this.cartViewModel.clearCart();
-
-      const paymentParams: PaymentSuccessParams = {
-        orderId: orderResult.order.orderId,
-        totalAmount: orderResult.order.finalAmount
-      };
-      this.showCheckout = false;
-      setTimeout(() => {
-        this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
-      }, 300);
+        const paymentParams: PaymentSuccessParams = {
+          orderId: orderResult.order.orderId,
+          totalAmount: orderResult.order.finalAmount
+        };
+        this.showCheckout = false;
+        setTimeout(() => {
+          this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
+        }, 300);
+      } else {
+        promptAction.showToast({
+          message: '订单创建成功，请稍后支付！',
+          duration: 2000
+        });
+        
+        // 清空购物车
+        await this.cartViewModel.clearCart();
+        
+        // 关闭结算页
+        this.showCheckout = false;
+      }
     } catch (error) {
       console.error('Order processing error:', error);
       promptAction.showToast({

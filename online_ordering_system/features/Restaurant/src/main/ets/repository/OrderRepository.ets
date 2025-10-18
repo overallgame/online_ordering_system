@@ -57,7 +57,8 @@ export class OrderRepository {
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
     estimatedDeliveryTime?: number,
-    remark?: string
+    remark?: string,
+    isPaid: boolean = true
   ): Promise<ApiResponse<OrderSubmitVO>> {
     try {
       // 创建订单提交参数
@@ -65,7 +66,8 @@ export class OrderRepository {
         cartItems,
         orderType,
         estimatedDeliveryTime,
-        remark
+        remark,
+        isPaid
       );
 
       // 提交订单
@@ -123,13 +125,6 @@ export class OrderRepository {
     return baseAmount + packAmount;
   }
 
-  /**
-   * 计算预计送达时间
-   * @param cartItems 购物车商品
-   * @param orderType 订单类型
-   * @param scheduledTime 预约时间（可选）
-   * @returns 预计送达时间戳
-   */
   calculateEstimatedDeliveryTime(
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
