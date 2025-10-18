@@ -424,19 +424,16 @@ export struct ComboRecommendPage {
   @Builder
   buildComboCard(combo: Combo) {
     Row() {
-      Column() {
-        Text(combo.icon)
-          .fontSize(32)
-          .width(60)
-          .height(60)
-          .backgroundColor('#F8F8F8')
-          .borderRadius(30)
-          .textAlign(TextAlign.Center)
-      }
-      .margin({ right: 12 })
-      .onClick(() => {
-        this.restaurantPathStack.pushPathByName(PageName.COMBO_DETAIL, combo);
-      })
+      Image(combo.image)
+        .width(80)
+        .height(80)
+        .objectFit(ImageFit.Cover)
+        .alt($r('app.media.zwt'))
+        .borderRadius(8)
+        .margin({ right: 12 })
+        .onClick(() => {
+          this.restaurantPathStack.pushPathByName(PageName.COMBO_DETAIL, combo);
+        })
 
       Column() {
         Text(combo.name)
@@ -544,7 +541,11 @@ export struct ComboRecommendPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                this.addToCart(combo);
+                const currentQuantity = this.comboQuantities.get(combo.comboId) || 0;
+                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.combo?.comboId === combo.comboId);
+                if (cartItem) {
+                  this.updateCartQuantity(cartItem.id, currentQuantity + 1);
+                }
               })
             }
             .alignItems(VerticalAlign.Center)

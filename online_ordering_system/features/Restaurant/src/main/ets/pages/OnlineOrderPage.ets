@@ -423,6 +423,7 @@ export struct OnlineOrderPage {
         .width(80)
         .height(80)
         .objectFit(ImageFit.Cover)
+        .alt($r('app.media.zwt'))
         .borderRadius(8)
         .margin({ right: 12 })
         .onClick(() => {
@@ -535,7 +536,11 @@ export struct OnlineOrderPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                this.addToCart(dish);
+                const currentQuantity = this.dishQuantities.get(dish.dishId) || 0;
+                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.dish?.dishId === dish.dishId);
+                if (cartItem) {
+                  this.updateCartQuantity(cartItem.id, currentQuantity + 1);
+                }
               })
             }
             .alignItems(VerticalAlign.Center)

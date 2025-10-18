@@ -153,7 +153,7 @@ export struct CheckoutPage {
       .backgroundColor('#1A1A1A')
       .borderRadius({ topLeft: 16, topRight: 16 })
       .position({ x: 0, y: '100%' })
-      .translate({ y: '-50%' })
+      .translate({ y: '-100%' })
       .transition(TransitionEffect.translate({ y: 0 }).animation({ duration: 300, curve: Curve.EaseOut }))
 
       if (this.showTimePicker) {
