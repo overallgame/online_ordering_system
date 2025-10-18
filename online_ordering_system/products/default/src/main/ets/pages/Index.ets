@@ -4,14 +4,14 @@ import { drawing } from '@kit.ArkGraphics2D';
 import { UserPage } from 'user';
 import { LoginPage, RegisterPage } from 'authentication';
 import { HomePage } from 'restaurant';
-import { AppDataManager } from 'common';
+import { ApiClient, AppDataManager } from 'common';
 import common from '@ohos.app.ability.common';
 
 @Entry
 @Component
 struct Index {
-  @State isLogin: boolean = false;
   @State currentIndex: number = 0;
+  @State isInitialized: boolean = false;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
   @Provide('mainPathStack') mainPathStack: NavPathStack = new NavPathStack();
   private tabsController: TabsController = new TabsController();
@@ -30,38 +30,23 @@ struct Index {
   private async initializeApp(): Promise<void> {
     try {
       const context = getContext(this) as common.UIAbilityContext;
-      const initSuccess = await this.appDataManager.initialize(context);
+      const initSuccess = await this.appDataManager.initializeUser(context);
       
       if (initSuccess) {
-        console.log('AppDataManager initialized successfully');
-        await this.checkAuthStatus();
+        const isLoggedIn = this.appDataManager.isLoggedIn();
+        if (!isLoggedIn) {
+          this.mainPathStack.pushPathByName('login', null);
+        }
+        ApiClient.getInstance();
+        this.isInitialized = true;
       } else {
-        console.error('Failed to initialize AppDataManager');
-        this.isLogin = false;
+        console.error('Failed to initialize user data');
+        this.isInitialized = true;
         this.mainPathStack.pushPathByName('login', null);
       }
     } catch (error) {
       console.error('App initialization error:', error);
-      this.isLogin = false;
-      this.mainPathStack.pushPathByName('login', null);
-    }
-  }
-
-  private async checkAuthStatus(): Promise<void> {
-    try {
-      console.log('Checking authentication status...');
-
-      const loginStatusFromPrefs = await this.appDataManager.isLoggedInFromPreferences();
-      console.log('Login status from preferences:', loginStatusFromPrefs);
-      
-      if (loginStatusFromPrefs) {
-        this.isLogin = true;
-        console.log('User logged in (from preferences) - navigating to main content');
-      }
-    } catch (error) {
-      console.error('Check auth status error:', error);
-      this.isLogin = false;
-      console.log('Error occurred - navigating to login page');
+      this.isInitialized = true;
       this.mainPathStack.pushPathByName('login', null);
     }
   }
@@ -69,7 +54,11 @@ struct Index {
   build() {
     Navigation(this.mainPathStack) {
       Column() {
-        this.buildMainContent();
+        if (this.isInitialized) {
+          this.buildMainContent();
+        } else {
+          this.buildLoadingPage();
+        }
       }
       .width('100%')
       .height('100%')
@@ -78,6 +67,26 @@ struct Index {
     .navDestination(this.mainRouter)
     .hideTitleBar(true)
     .mode(NavigationMode.Stack)
+  }
+
+  @Builder
+  buildLoadingPage() {
+    Column() {
+      LoadingProgress()
+        .width(30)
+        .height(30)
+        .color('#1890FF')
+      
+      Text('正在加载...')
+        .fontSize(14)
+        .fontColor('#666666')
+        .margin({ top: 12 })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
   }
 
   @Builder
@@ -105,7 +114,7 @@ struct Index {
 
       TabContent() {
         UserPage()
-      }.tabBar(this.tabBarBuilder("我", 2, $r("app.media.mine"), $r("app.media.mine_active")))
+      }.tabBar(this.tabBarBuilder("我", 1, $r("app.media.mine"), $r("app.media.mine_active")))
     }
     .scrollable(false)
     .vertical(this.currentBreakpoint === BreakpointTypeEnum.LG ? true : false)

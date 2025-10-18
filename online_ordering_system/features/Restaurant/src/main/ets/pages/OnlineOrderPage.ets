@@ -1,7 +1,5 @@
 import { promptAction } from '@kit.ArkUI';
 import { Dish, CartItem, Category } from 'common';
-import { BreakpointSystem } from 'utils';
-import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { DishViewModel } from '../viewModel/DishViewModel';
 import { CartViewModel } from '../viewModel/CartViewModel';
 import { LoadStatus } from '../util/DataState';
@@ -23,25 +21,20 @@ export struct OnlineOrderPage {
   @State searchText: string = '';
   // 购物车状态
   private cartViewModel: CartViewModel = new CartViewModel('', '', 'online');
+  @State isCartLoading: boolean = false;
   @State cartItems: CartItem[] = [];
   @State cartTotalQuantity: number = 0;
   @State cartTotalAmount: number = 0;
   @State dishQuantities: Map<string, number> = new Map();
-  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
-  private breakpointSystem: BreakpointSystem = new BreakpointSystem();
   // 结算页状态
   @State showCheckout: boolean = false;
-  // 购物车操作状态
-  @State isCartLoading: boolean = false;
 
   aboutToAppear() {
-    this.breakpointSystem.register();
     this.loadCategories();
     this.initializeCart();
   }
 
   aboutToDisappear() {
-    this.breakpointSystem.unregister();
     this.cartViewModel.destroy();
   }
 
@@ -115,17 +108,37 @@ export struct OnlineOrderPage {
     }
   }
 
+  private onSearch() {
+    if (this.searchText.trim()) {
+      this.filterDishes();
+    } else {
+      this.dishes = this.allDishes;
+    }
+  }
+
+  // 筛选菜品
+  private filterDishes() {
+    const keyword = this.searchText.trim().toLowerCase();
+    this.dishes = this.allDishes.filter(dish =>
+    dish.name.toLowerCase().includes(keyword) ||
+    dish.description?.toLowerCase().includes(keyword) ||
+    dish.tags.some(tag => tag.toLowerCase().includes(keyword))
+    );
+  }
+
   private async initializeCart() {
     try {
       this.cartViewModel.addListener((cart) => {
         this.cartItems = cart.items || [];
         this.cartTotalQuantity = cart.totalQuantity || 0;
-        this.cartTotalAmount = cart.finalAmount || 0;
+        this.cartTotalAmount = cart.totalAmount || 0;
+        console.log(this.cartTotalQuantity.toString() + this.cartTotalAmount.toString() + "www")
 
         const newQuantities = new Map<string, number>();
         this.cartItems.forEach((item: CartItem) => {
           if (item.dish && item.dish.dishId) {
             newQuantities.set(item.dish.dishId, item.quantity);
+            console.log(item.quantity + "wwww")
           }
         });
         this.dishQuantities = newQuantities;
@@ -139,8 +152,6 @@ export struct OnlineOrderPage {
       
       // 启动自动保存
       this.cartViewModel.startAutoSave();
-      
-      console.log('OnlineOrderPage: Cart initialized successfully');
     } catch (error) {
       console.error('Failed to initialize cart:', error);
       this.cartItems = [];
@@ -149,20 +160,10 @@ export struct OnlineOrderPage {
     }
   }
 
-  // 筛选菜品
-  private filterDishes() {
-    const keyword = this.searchText.trim().toLowerCase();
-    this.dishes = this.allDishes.filter(dish =>
-      dish.name.toLowerCase().includes(keyword) ||
-      dish.description?.toLowerCase().includes(keyword) ||
-      dish.tags.some(tag => tag.toLowerCase().includes(keyword))
-    );
-  }
-
   // 添加菜品到购物车
-  private async addToCart(dish: Dish): Promise<void> {
-    if (!dish || !dish.dishId) {
-      console.error('Invalid dish provided to addToCart');
+  private async addToCart(dishId: string): Promise<void> {
+    if (!dishId) {
+      console.error('Invalid dishId provided to addToCart');
       promptAction.showToast({
         message: '商品信息错误',
         duration: 2000
@@ -171,12 +172,12 @@ export struct OnlineOrderPage {
     }
     
     if (this.isCartLoading) {
-      return; // 防止重复操作
+      return;
     }
     
     this.isCartLoading = true;
     try {
-      const success = await this.cartViewModel.addItem(dish, undefined, 1);
+      const success = await this.cartViewModel.addItemById(parseInt(dishId));
       if (success) {
         promptAction.showToast({
           message: '已添加到购物车',
@@ -199,46 +200,43 @@ export struct OnlineOrderPage {
     }
   }
 
-  // 更新菜品数量
-  private async updateCartQuantity(itemId: string, quantity: number): Promise<void> {
-    if (!itemId || quantity < 0) {
-      console.error('Invalid parameters for updateCartQuantity');
+  // 从购物车移除菜品
+  private async removeFromCart(dishId: string): Promise<void> {
+    if (!dishId) {
+      console.error('Invalid dishId provided to removeFromCart');
       promptAction.showToast({
-        message: '参数错误',
+        message: '商品信息错误',
         duration: 2000
       });
       return;
     }
     
     if (this.isCartLoading) {
-      return; // 防止重复操作
+      return;
     }
     
     this.isCartLoading = true;
     try {
-      const success = await this.cartViewModel.updateItemQuantity(itemId, quantity);
-      if (!success) {
+      const success = await this.cartViewModel.removeItemById(parseInt(dishId));
+      if (success) {
         promptAction.showToast({
-          message: '更新失败，请重试',
+          message: '已从购物车移除',
+          duration: 1500
+        });
+      } else {
+        promptAction.showToast({
+          message: '移除失败，请重试',
           duration: 2000
         });
       }
     } catch (error) {
-      console.error('Error updating item quantity:', error);
+      console.error('Error removing dish from cart:', error);
       promptAction.showToast({
         message: '网络错误，请检查网络连接',
         duration: 2000
       });
     } finally {
       this.isCartLoading = false;
-    }
-  }
-
-  private onSearch() {
-    if (this.searchText.trim()) {
-      this.filterDishes();
-    } else {
-      this.dishes = this.allDishes;
     }
   }
 
@@ -511,11 +509,7 @@ export struct OnlineOrderPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                const currentQuantity = this.dishQuantities.get(dish.dishId) || 0;
-                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.dish?.dishId === dish.dishId);
-                if (cartItem) {
-                  this.updateCartQuantity(cartItem.id, currentQuantity - 1);
-                }
+                this.removeFromCart(dish.dishId);
               })
 
               Text(`${this.dishQuantities.get(dish.dishId) || 0}`)
@@ -536,11 +530,7 @@ export struct OnlineOrderPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                const currentQuantity = this.dishQuantities.get(dish.dishId) || 0;
-                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.dish?.dishId === dish.dishId);
-                if (cartItem) {
-                  this.updateCartQuantity(cartItem.id, currentQuantity + 1);
-                }
+                this.addToCart(dish.dishId);
               })
             }
             .alignItems(VerticalAlign.Center)
@@ -557,7 +547,7 @@ export struct OnlineOrderPage {
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .onClick(() => {
-              this.addToCart(dish);
+              this.addToCart(dish.dishId);
             })
           }
         }

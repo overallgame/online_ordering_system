@@ -16,7 +16,7 @@ export class OrderDataConverter {
     order.finalAmount = orderSubmitVO.orderAmount;
     order.createTime = new Date(orderSubmitVO.orderTime).getTime();
     order.status = OrderStatus.PENDING;
-    order.paymentStatus = isPaid ? PaymentStatus.PAID : PaymentStatus.UNPAID;
+    order.paymentStatus = isPaid ? PaymentStatus.PAID : PaymentStatus.PENDING;
 
     if (cartItems && cartItems.length > 0) {
       order.items = OrderDataConverter.convertCartItemsToOrderItems(cartItems);

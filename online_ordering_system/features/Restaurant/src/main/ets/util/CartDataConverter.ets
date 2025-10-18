@@ -6,11 +6,14 @@ export class CartDataConverter {
   static convertApiDataToCart(apiItems: ShoppingCartItem[]): Cart {
     const cart = new Cart();
     
-    // 转换购物车商品项
-    cart.items = apiItems.map(item => CartDataConverter.convertApiItemToCartItem(item));
+    // 合并相同商品
+    const mergedItems = CartDataConverter.mergeSameItems(apiItems);
     
-    // 计算总计
-    cart.updateTotals();
+    cart.items = mergedItems.map(item => CartDataConverter.convertApiItemToCartItem(item));
+    cart.totalAmount = CartDataConverter.calculateTotalAmount(mergedItems);
+    cart.totalQuantity = CartDataConverter.calculateTotalQuantity(mergedItems);
+    
+    console.log(`[CartDataConverter] Original items: ${apiItems.length}, Merged items: ${mergedItems.length}`);
     
     return cart;
   }
@@ -22,13 +25,10 @@ export class CartDataConverter {
     cartItem.quantity = apiItem.number;
     cartItem.note = apiItem.dishFlavor || '';
     cartItem.addedTime = new Date(apiItem.createTime).getTime();
-    
-    // 根据dishId或setmealId设置对应的商品信息
+
     if (apiItem.dishId) {
-      // 创建简化的菜品对象
       cartItem.dish = CartDataConverter.createDishFromApiItem(apiItem);
     } else if (apiItem.setmealId) {
-      // 创建简化的套餐对象
       cartItem.combo = CartDataConverter.createComboFromApiItem(apiItem);
     }
     
@@ -103,5 +103,32 @@ export class CartDataConverter {
 
   static calculateTotalQuantity(apiItems: ShoppingCartItem[]): number {
     return apiItems.reduce((total, item) => total + item.number, 0);
+  }
+
+  // 合并相同商品
+  static mergeSameItems(apiItems: ShoppingCartItem[]): ShoppingCartItem[] {
+    const itemMap = new Map<string, ShoppingCartItem>();
+    
+    apiItems.forEach(item => {
+      const key = CartDataConverter.generateItemKey(item);
+      
+      if (itemMap.has(key)) {
+        const existingItem = itemMap.get(key)!;
+        existingItem.number += item.number;
+        existingItem.amount = existingItem.amount;
+      } else {
+        itemMap.set(key, item);
+      }
+    });
+    
+    return Array.from(itemMap.values());
+  }
+
+  // 生成商品唯一键
+  static generateItemKey(item: ShoppingCartItem): string {
+    const dishId = item.dishId || 0;
+    const setmealId = item.setmealId || 0;
+
+    return `${dishId}_${setmealId}`;
   }
 }

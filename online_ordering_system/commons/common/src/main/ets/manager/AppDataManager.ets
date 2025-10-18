@@ -10,7 +10,6 @@ export class AppDataManager {
   private dbManager: DatabaseManager = DatabaseManager.getInstance();
   private preferences?: dataPreferences.Preferences;
   private isInitialized: boolean = false;
-  
   // Preferences 键名常量
   private static readonly PREF_NAME = 'user_preferences';
   private static readonly KEY_USER_ID = 'user_id';
@@ -26,21 +25,18 @@ export class AppDataManager {
     return AppDataManager._instance;
   }
 
-  async initialize(context: common.Context): Promise<boolean> {
-    if (this.isInitialized) {
-      return true;
-    }
-
+  async initializeUser(context: common.Context): Promise<boolean> {
     try {
-      this.preferences = await dataPreferences.getPreferences(context, AppDataManager.PREF_NAME);
+      if (!this.preferences) {
+        this.preferences = await dataPreferences.getPreferences(context, AppDataManager.PREF_NAME);
+      }
       await this.dbManager.initialize(context);
       await this.loadCurrentUser();
       
       this.isInitialized = true;
-      console.info('AppDataManager initialized successfully');
       return true;
     } catch (error) {
-      console.error('AppDataManager initialization failed:', error);
+      console.error('User initialization failed:', error);
       return false;
     }
   }
@@ -64,7 +60,6 @@ export class AppDataManager {
   async loadCurrentUser(): Promise<void> {
     try {
       const user = await this.dbManager.getCurrentUser();
-      console.log(user?.userId+"jjjjj");
       if (user) {
         this._currentUser = user;
         this._notifyListeners();
@@ -76,7 +71,6 @@ export class AppDataManager {
 
   async logout(): Promise<boolean> {
     if (!this._currentUser) {
-      console.warn('No current user to logout');
       return false;
     }
 
@@ -86,7 +80,6 @@ export class AppDataManager {
       
       this._currentUser = null;
       this._notifyListeners();
-      console.info('User logged out successfully');
       return true;
     } catch (error) {
       console.error('Logout failed:', error);
@@ -98,19 +91,16 @@ export class AppDataManager {
     return this._currentUser;
   }
 
-  isLoggedIn(): boolean {
-    this.loadCurrentUser()
-    return !!this._currentUser && this._currentUser.isLoggedIn;
-  }
-
   getToken(): string {
     return this._currentUser?.token || '';
   }
 
+  isLoggedIn(): boolean {
+    return !!this._currentUser && this._currentUser.isLoggedIn;
+  }
+
   addUserListener(listener: (user: User | null) => void): void {
     this._listeners.push(listener);
-
-    // 立即通知当前状态
     if (this.isInitialized) {
       try {
         listener(this._currentUser);
@@ -128,7 +118,6 @@ export class AppDataManager {
   }
 
   private _notifyListeners(): void {
-
     this._listeners.forEach(listener => {
       try {
         listener(this._currentUser);
@@ -140,7 +129,6 @@ export class AppDataManager {
 
   private async saveUserToPreferences(user: User): Promise<void> {
     if (!this.preferences) {
-      console.warn('Preferences not initialized');
       return;
     }
 
@@ -151,47 +139,14 @@ export class AppDataManager {
       await this.preferences.put(AppDataManager.KEY_IS_LOGGED_IN, user.isLoggedIn);
       await this.preferences.put(AppDataManager.KEY_LAST_LOGIN_TIME, user.lastLoginTime);
       await this.preferences.flush();
-      console.info('User data saved to preferences');
     } catch (error) {
       console.error('Failed to save user to preferences:', error);
     }
   }
 
-  private async loadUserFromPreferences(): Promise<void> {
-    if (!this.preferences) {
-      console.warn('Preferences not initialized');
-      return;
-    }
-
-    try {
-      const isLoggedIn = await this.preferences.get(AppDataManager.KEY_IS_LOGGED_IN, false) as boolean;
-      
-      if (isLoggedIn) {
-        const userId = await this.preferences.get(AppDataManager.KEY_USER_ID, '') as string;
-        const username = await this.preferences.get(AppDataManager.KEY_USERNAME, '') as string;
-        const token = await this.preferences.get(AppDataManager.KEY_TOKEN, '') as string;
-        const lastLoginTime = await this.preferences.get(AppDataManager.KEY_LAST_LOGIN_TIME, 0) as number;
-
-        if (userId && username) {
-          const user = new User();
-          user.userId = userId;
-          user.username = username;
-          user.token = token;
-          user.isLoggedIn = isLoggedIn;
-          user.lastLoginTime = lastLoginTime;
-
-          this._currentUser = user;
-          console.info('User loaded from preferences');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load user from preferences:', error);
-    }
-  }
 
   private async clearUserFromPreferences(): Promise<void> {
     if (!this.preferences) {
-      console.warn('Preferences not initialized');
       return;
     }
 
@@ -202,7 +157,6 @@ export class AppDataManager {
       await this.preferences.delete(AppDataManager.KEY_IS_LOGGED_IN);
       await this.preferences.delete(AppDataManager.KEY_LAST_LOGIN_TIME);
       await this.preferences.flush();
-      console.info('User data cleared from preferences');
     } catch (error) {
       console.error('Failed to clear user from preferences:', error);
     }

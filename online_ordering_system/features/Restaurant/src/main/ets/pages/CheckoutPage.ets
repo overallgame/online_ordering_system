@@ -12,6 +12,7 @@ export struct CheckoutPage {
   @Prop sourceProp?: string = '';
   @Prop cartItemsProp?: CartItem[] = [];
   @Link showCheckout: boolean;
+
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   @State source: string = '';
   @State cartItems: CartItem[] = [];
@@ -40,24 +41,8 @@ export struct CheckoutPage {
       this.orderType = 'dine_in';
     }
     this.loadCurrentUser();
-    this.initializeDeliveryTime();
     this.loadCartData();
-  }
-
-  // 加载购物车数据
-  private async loadCartData(): Promise<void> {
-    try {
-      // 设置购物车监听器
-      this.cartViewModel.addListener((cart) => {
-        this.cartItems = cart.items;
-        this.calculateTotals();
-      });
-      
-      // 加载购物车数据
-      await this.cartViewModel.loadCart();
-    } catch (error) {
-      console.error('Failed to load cart data:', error);
-    }
+    this.initializeDeliveryTime();
   }
 
   // 加载当前用户信息
@@ -70,12 +55,26 @@ export struct CheckoutPage {
     appDataManager.addUserListener(this.userListener);
   }
 
+  // 加载购物车数据
+  private async loadCartData(): Promise<void> {
+    try {
+      this.cartViewModel.addListener((cart) => {
+        this.cartItems = cart.items;
+        this.calculateTotals();
+      });
+
+      await this.cartViewModel.loadCart();
+    } catch (error) {
+      console.error('Failed to load cart data:', error);
+    }
+  }
+
   // 计算立即送达时间
   private initializeDeliveryTime(): void {
     const now = new Date();
     const preparationTime = this.calculatePreparationTime();
 
-    const deliveryTime = new Date(now.getTime() + (preparationTime + 15) * 60 * 1000); // 15分钟配送时间
+    const deliveryTime = new Date(now.getTime() + (preparationTime + 15) * 60 * 1000);
 
     const startTime = new Date(now.getTime() + preparationTime * 60 * 1000);
     const endTime = deliveryTime;

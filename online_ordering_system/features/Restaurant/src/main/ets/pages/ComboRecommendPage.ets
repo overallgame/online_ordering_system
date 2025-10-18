@@ -162,11 +162,10 @@ export struct ComboRecommendPage {
     );
   }
 
-
   // 添加套餐到购物车
-  private async addToCart(combo: Combo): Promise<void> {
-    if (!combo || !combo.comboId) {
-      console.error('Invalid combo provided to addToCart');
+  private async addToCart(comboId: string): Promise<void> {
+    if (!comboId) {
+      console.error('Invalid comboId provided to addToCart');
       promptAction.showToast({
         message: '套餐信息错误',
         duration: 2000
@@ -175,12 +174,12 @@ export struct ComboRecommendPage {
     }
     
     if (this.isCartLoading) {
-      return; // 防止重复操作
+      return;
     }
     
     this.isCartLoading = true;
     try {
-      const success = await this.cartViewModel.addItem(undefined, combo, 1);
+      const success = await this.cartViewModel.addItemById(undefined, parseInt(comboId));
       if (success) {
         promptAction.showToast({
           message: '已添加到购物车',
@@ -203,32 +202,37 @@ export struct ComboRecommendPage {
     }
   }
 
-  // 更新套餐数量
-  private async updateCartQuantity(itemId: string, quantity: number): Promise<void> {
-    if (!itemId || quantity < 0) {
-      console.error('Invalid parameters for updateCartQuantity');
+  // 从购物车移除套餐
+  private async removeFromCart(comboId: string): Promise<void> {
+    if (!comboId) {
+      console.error('Invalid comboId provided to removeFromCart');
       promptAction.showToast({
-        message: '参数错误',
+        message: '套餐信息错误',
         duration: 2000
       });
       return;
     }
     
     if (this.isCartLoading) {
-      return; // 防止重复操作
+      return;
     }
     
     this.isCartLoading = true;
     try {
-      const success = await this.cartViewModel.updateItemQuantity(itemId, quantity);
-      if (!success) {
+      const success = await this.cartViewModel.removeItemById(undefined, parseInt(comboId));
+      if (success) {
         promptAction.showToast({
-          message: '更新失败，请重试',
+          message: '已从购物车移除',
+          duration: 1500
+        });
+      } else {
+        promptAction.showToast({
+          message: '移除失败，请重试',
           duration: 2000
         });
       }
     } catch (error) {
-      console.error('Error updating item quantity:', error);
+      console.error('Error removing combo from cart:', error);
       promptAction.showToast({
         message: '网络错误，请检查网络连接',
         duration: 2000
@@ -516,11 +520,7 @@ export struct ComboRecommendPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                const currentQuantity = this.comboQuantities.get(combo.comboId) || 0;
-                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.combo?.comboId === combo.comboId);
-                if (cartItem) {
-                  this.updateCartQuantity(cartItem.id, currentQuantity - 1);
-                }
+                this.removeFromCart(combo.comboId)
               })
 
               Text(`${this.comboQuantities.get(combo.comboId) || 0}`)
@@ -541,11 +541,7 @@ export struct ComboRecommendPage {
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                const currentQuantity = this.comboQuantities.get(combo.comboId) || 0;
-                const cartItem: CartItem | undefined = this.cartItems.find((item: CartItem) => item.combo?.comboId === combo.comboId);
-                if (cartItem) {
-                  this.updateCartQuantity(cartItem.id, currentQuantity + 1);
-                }
+                this.addToCart(combo.comboId)
               })
             }
             .alignItems(VerticalAlign.Center)
@@ -562,7 +558,7 @@ export struct ComboRecommendPage {
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .onClick(() => {
-              this.addToCart(combo);
+              this.addToCart(combo.comboId);
             })
           }
         }

@@ -1,4 +1,4 @@
-import { AppDataManager, Category, Dish } from 'common';
+import { Category, Dish } from 'common';
 import { DishViewModel } from '../viewModel/DishViewModel';
 import { LoadStatus } from '../util/DataState';
 import { BreakpointSystem } from 'utils';
@@ -46,90 +46,34 @@ export struct HomePage {
 
   aboutToAppear() {
     this.breakpointSystem.register();
-    this.checkLoginAndLoadCategories();
+    this.loadCategories();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
   }
 
-  private async checkLoginAndLoadCategories() {
-    try {
-      const appDataManager = AppDataManager.getInstance();
-
-      if (appDataManager.isLoggedIn()) {
-        console.log('HomePage: 用户已登录，加载真实分类数据');
-        await this.loadCategories();
-      } else {
-        console.log('HomePage: 用户未登录，使用默认分类数据');
-        this.categories = this.getDefaultCategories();
-        console.log('HomePage: 默认分类数据:', this.categories);
-        if (this.categories.length > 0) {
-          this.selectedCategory = this.categories[0];
-          console.log('HomePage: 选中第一个分类:', this.selectedCategory);
-          await this.loadInitial();
-        }
-      }
-    } catch (error) {
-      console.error('HomePage: 检查登录状态失败:', error);
-      this.categories = this.getDefaultCategories();
-      console.log('HomePage: 异常情况下使用默认分类数据:', this.categories);
-      if (this.categories.length > 0) {
-        this.selectedCategory = this.categories[0];
-        await this.loadInitial();
-      }
-    }
-  }
-
-  private getDefaultCategories(): Category[] {
-    const defaultCategories: Array<string> = ['热菜', '凉菜', '汤品', '主食'];
-    
-    return defaultCategories.map((name: string, index: number) => {
-      const category = new Category();
-      category.id = 101 + index;
-      category.name = name;
-      category.type = 1;
-      category.sort = index;
-      category.status = 1;
-      return category;
-    });
-  }
-
   private async loadCategories() {
-    console.log('HomePage: 开始加载分类数据...');
     this.categories = await this.viewModel.loadCategories(1);
-    console.log('HomePage: 加载到的分类数据:', this.categories);
     if (this.categories.length > 0) {
       this.selectedCategory = this.categories[0];
-      console.log('HomePage: 选中第一个分类:', this.selectedCategory);
       await this.loadInitial();
-    } else {
-      console.warn('HomePage: 没有加载到分类数据，使用默认分类');
-      this.categories = this.getDefaultCategories();
-      if (this.categories.length > 0) {
-        this.selectedCategory = this.categories[0];
-        await this.loadInitial();
-      }
     }
   }
 
   private async loadInitial() {
-    console.log('HomePage: 开始加载初始菜品数据...');
     this.status = LoadStatus.Loading;
     this.error = undefined;
 
     if (this.selectedCategory) {
-      console.log('HomePage: 根据选中分类加载菜品，分类ID:', this.selectedCategory.id);
       await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
     } else {
-      console.log('HomePage: 没有选中分类，使用默认分类ID 101');
       await this.viewModel.loadDishesByCategoryId(101);
     }
-    
+
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
-    console.log('HomePage: 菜品加载完成，状态:', this.status, '菜品数量:', this.dishes.length, '错误:', this.error);
   }
 
   private async onRefresh() {
@@ -140,7 +84,7 @@ export struct HomePage {
     } else {
       await this.viewModel.loadDishesByCategoryId(101);
     }
-    
+
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
@@ -157,12 +101,12 @@ export struct HomePage {
   // 根据选中分类加载菜品
   private async loadDishesByCategory() {
     if (!this.selectedCategory) return;
-    
+
     this.status = LoadStatus.Loading;
     this.error = undefined;
-    
+
     await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
-    
+
     this.dishes = this.viewModel.state.data;
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;

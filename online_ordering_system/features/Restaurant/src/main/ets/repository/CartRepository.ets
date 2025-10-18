@@ -32,8 +32,6 @@ export class CartRepository {
       if (response.success && response.data && response.data.data) {
         return CartDataConverter.convertApiDataToCart(response.data.data);
       }
-      
-      console.warn('Failed to get cart list:', response.error);
       return null;
     } catch (error) {
       console.error('Failed to get cart list:', error);
@@ -131,77 +129,5 @@ export class CartRepository {
       console.error('Failed to clear cart:', error);
       return false;
     }
-  }
-
-  // 更新商品数量（通过多次调用add/sub接口实现）
-  async updateItemQuantity(targetQuantity: number, dishId?: number, setmealId?: number, dishFlavor?: string): Promise<boolean> {
-    try {
-      // 先获取当前购物车
-      const currentCart = await this.getCartList();
-      if (!currentCart) {
-        console.warn('Failed to get current cart for quantity update');
-        return false;
-      }
-
-      // 找到当前商品的数量
-      const currentItem = currentCart.items.find(item => {
-        if (dishId && item.dish) {
-          return item.dish.dishId === dishId.toString();
-        }
-        if (setmealId && item.combo) {
-          return item.combo.comboId === setmealId.toString();
-        }
-        return false;
-      });
-      
-      if (!currentItem) {
-        console.warn('Item not found in cart for quantity update');
-        return false;
-      }
-
-      const currentQuantity = currentItem.quantity;
-      const difference = targetQuantity - currentQuantity;
-
-      if (difference > 0) {
-        // 需要增加数量
-        for (let i = 0; i < difference; i++) {
-          const success = await this.addToCart(dishId, setmealId, dishFlavor);
-          if (!success) {
-            console.error(`Failed to add item on attempt ${i + 1}`);
-            return false;
-          }
-        }
-      } else if (difference < 0) {
-        // 需要减少数量
-        for (let i = 0; i < Math.abs(difference); i++) {
-          const success = await this.removeFromCart(dishId, setmealId, dishFlavor);
-          if (!success) {
-            console.error(`Failed to remove item on attempt ${i + 1}`);
-            return false;
-          }
-        }
-      }
-
-      console.log(`Successfully updated item quantity to ${targetQuantity}`);
-      return true;
-    } catch (error) {
-      console.error('Failed to update item quantity:', error);
-      return false;
-    }
-  }
-
-  // 带重试机制的网络请求
-  async addToCartWithRetry(dishId?: number, setmealId?: number, dishFlavor?: string, maxRetries: number = 3): Promise<boolean> {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const success = await this.addToCart(dishId, setmealId, dishFlavor);
-        if (success) return true;
-        
-        console.warn(`Add to cart attempt ${i + 1} failed, retrying...`);
-      } catch (error) {
-        console.error(`Add to cart attempt ${i + 1} failed:`, error);
-      }
-    }
-    return false;
   }
 }
