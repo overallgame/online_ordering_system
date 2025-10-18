@@ -1,4 +1,4 @@
-import { Order, OrderItem, OrderStatus, PaymentStatus, PaymentMethod, OrderType } from 'common';
+import { Order, OrderItem, OrderStatus, PaymentStatus, PaymentMethod, OrderType, Dish } from 'common';
 
 /**
  * 接口数据模型定义（根据苍穹外卖接口文档）
@@ -63,6 +63,20 @@ export interface AdminOrderSearchResponse {
 }
 
 /**
+ * 历史订单接口响应数据结构（根据苍穹外卖接口文档）
+ */
+export interface HistoryOrderData {
+  total: number;
+  records: ApiOrder[];
+}
+
+export interface HistoryOrderResponse {
+  code: number;
+  msg: string | null;
+  data: HistoryOrderData;
+}
+
+/**
  * 订单数据转换器
  */
 export class OrderDataConverter {
@@ -118,8 +132,23 @@ export class OrderDataConverter {
     orderItem.totalPrice = apiDetail.amount;
     orderItem.note = apiDetail.dishFlavor || '';
     
-    // 这里可以根据需要创建Dish对象
-    // 由于现有模型中没有Dish的完整信息，暂时只设置基本信息
+    // 创建Dish对象
+    const dish = new Dish();
+    dish.dishId = apiDetail.dishId.toString();
+    dish.name = apiDetail.name;
+    dish.price = orderItem.unitPrice;
+    dish.image = apiDetail.image;
+    dish.description = ''; // 接口中没有描述信息
+    dish.category = ''; // 接口中没有分类信息
+    dish.isAvailable = true; // 默认可用
+    dish.stock = 0; // 接口中没有库存信息
+    dish.tags = []; // 接口中没有标签信息
+    dish.preparationTime = 15; // 默认准备时间15分钟
+    dish.rating = 0; // 接口中没有评分信息
+    dish.reviewCount = 0; // 接口中没有评论数量信息
+    
+    orderItem.dish = dish;
+    
     return orderItem;
   }
 
@@ -165,25 +194,18 @@ export class OrderDataConverter {
     return apiResponse.records.map(order => OrderDataConverter.convertOrder(order));
   }
 
+
+
   /**
-   * 将管理端订单搜索接口响应转换为应用订单列表
+   * 将历史订单接口响应转换为应用订单列表
    */
-  static convertAdminOrderSearchResponse(apiResponse: AdminOrderSearchResponse): Order[] {
-    if (apiResponse.code === 1 && apiResponse.data) {
-      return apiResponse.data.records.map(order => OrderDataConverter.convertOrder(order));
+  static convertHistoryOrderList(apiData: HistoryOrderData): Order[] {
+    if (apiData && apiData.records) {
+      return apiData.records.map(order => OrderDataConverter.convertOrder(order));
     }
     return [];
   }
 
-  /**
-   * 从管理端订单搜索接口响应中获取总数
-   */
-  static getTotalFromAdminResponse(apiResponse: AdminOrderSearchResponse): number {
-    if (apiResponse.code === 1 && apiResponse.data) {
-      return apiResponse.data.total;
-    }
-    return 0;
-  }
 
   /**
    * 解析时间字符串为时间戳

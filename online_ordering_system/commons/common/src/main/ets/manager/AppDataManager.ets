@@ -64,6 +64,7 @@ export class AppDataManager {
   async loadCurrentUser(): Promise<void> {
     try {
       const user = await this.dbManager.getCurrentUser();
+      console.log(user?.userId+"jjjjj");
       if (user) {
         this._currentUser = user;
         this._notifyListeners();
@@ -98,6 +99,7 @@ export class AppDataManager {
   }
 
   isLoggedIn(): boolean {
+    this.loadCurrentUser()
     return !!this._currentUser && this._currentUser.isLoggedIn;
   }
 

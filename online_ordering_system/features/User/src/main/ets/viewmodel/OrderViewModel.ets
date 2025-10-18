@@ -2,6 +2,7 @@ import { Order, OrderStatus, PaymentStatus, OrderType, PaymentMethod } from 'com
 import { OrderService, PaymentResult } from '../service/OrderService';
 import {OrderServiceTest} from '../test/OrderServiceTest'
 import { OrderDataConverter } from '../util/OrderDataConverter';
+import {AppDataManager} from 'common'
 /**
  * 订单ViewModel - 处理订单相关的业务逻辑
  */
@@ -30,15 +31,20 @@ export class OrderViewModel {
   private userId: string = '';
 
   constructor() {
-    OrderServiceTest.runAllTests();
+    this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
+    //OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
   }
 
   /**
    * 设置用户ID
    */
-  setUserId(userId: string): void {
-    this.userId = userId;
+  setUserId(userId: string | undefined ): void {
+    if(userId)
+    {
+      this.userId = userId;
+    }
+
   }
 
   /**
@@ -73,14 +79,11 @@ export class OrderViewModel {
     }
 
     try {
-      // 使用管理端订单搜索接口获取用户全部订单
-      const response = await this.orderService.getUserAllOrders(
-        this.userId,
+      // 使用历史订单接口获取用户订单
+      const response = await this.orderService.getHistoryOrders(
         this.currentPage, 
         this.pageSize, 
-        this.selectedStatus,
-        this.beginTime,
-        this.endTime
+        this.selectedStatus
       );
 
       if (response.success && response.data) {
@@ -92,6 +95,7 @@ export class OrderViewModel {
         this.totalCount = response.data.total;
         this.hasMore = this.orders.length < this.totalCount;
         this.currentPage++;
+        console.log(`加载订单成功: 当前页${this.currentPage-1}, 订单数量${this.orders.length}, 总计${this.totalCount}`);
       } else {
         console.error('加载订单失败:', response.error);
       }

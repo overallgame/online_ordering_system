@@ -27,7 +27,7 @@ export class OrderItem {
   itemId: string = '';
   dish?: Dish;
   combo?: Combo;
-  quantity: number = 0;
+  quantity: number = 0;//数量
   unitPrice: number = 0;
   totalPrice: number = 0;
   customizations: Array<SelectedCustomization> = [];
