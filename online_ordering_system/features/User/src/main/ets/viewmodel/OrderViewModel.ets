@@ -3,11 +3,12 @@ import { OrderService, PaymentResult } from '../service/OrderService';
 import {OrderServiceTest} from '../test/OrderServiceTest'
 import { OrderDataConverter } from '../util/OrderDataConverter';
 import {AppDataManager} from 'common'
+import { OrderStatusManager, OrderStatusListener } from '../manager/OrderStatusManager';
 /**
  * 订单ViewModel - 处理订单相关的业务逻辑
  */
 @Observed
-export class OrderViewModel {
+export class OrderViewModel implements OrderStatusListener {
   // 订单列表
   orders: Order[] = [];
   // 加载状态
@@ -34,6 +35,9 @@ export class OrderViewModel {
     this.setUserId(AppDataManager.getInstance().getCurrentUser()?.userId)
     OrderServiceTest.runAllTests();
     this.orderService = OrderService.getInstance();
+    
+    // 注册订单状态监听器
+    OrderStatusManager.getInstance().addListener(this);
   }
 
   /**
@@ -318,5 +322,38 @@ export class OrderViewModel {
    */
   canPayOrder(order: Order): boolean {
     return order.status === OrderStatus.PENDING && order.paymentStatus === PaymentStatus.PENDING;
+  }
+
+  /**
+   * 订单状态变化监听器实现
+   */
+  onOrderStatusChanged(orderId: string, oldStatus: OrderStatus, newStatus: OrderStatus): void {
+    console.log(`订单状态变化: ${orderId} 从 ${oldStatus} 变为 ${newStatus}`);
+    
+    // 更新本地订单状态
+    const orderIndex = this.orders.findIndex(order => order.orderId === orderId);
+    if (orderIndex !== -1) {
+      this.orders[orderIndex].status = newStatus;
+      this.orders[orderIndex].updateTime = Date.now();
+      
+      // 触发UI更新
+      this.orders = [...this.orders];
+      
+      console.log(`订单 ${orderId} 状态已更新为 ${newStatus}`);
+    }
+  }
+
+  /**
+   * 手动更新订单状态（用于测试或外部调用）
+   */
+  updateOrderStatus(orderId: string, newStatus: OrderStatus): void {
+    OrderStatusManager.getInstance().updateOrderStatus(orderId, newStatus);
+  }
+
+  /**
+   * 清理资源
+   */
+  cleanup(): void {
+    OrderStatusManager.getInstance().removeListener(this);
   }
 }

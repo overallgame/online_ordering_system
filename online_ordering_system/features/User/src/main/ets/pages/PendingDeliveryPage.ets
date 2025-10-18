@@ -8,7 +8,7 @@ import { ToastComponent } from '../components/ToastComponent';
  */
 @Component
 export struct PendingDeliveryPage {
-  @Link orderViewModel: OrderViewModel;
+  @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
   @State showRemindDialog: boolean = false;
   @State selectedOrder: Order | null = null;

@@ -2,6 +2,7 @@ import { ApiClient, ApiEndpoints, ApiResponse } from 'common';
 import { Order, OrderStatus, PaymentStatus, PaymentMethod } from 'common';
 import { OrderDataConverter, ApiOrderListResponse, ApiOrder, AdminOrderSearchResponse, HistoryOrderResponse } from '../util/OrderDataConverter';
 import { MockOrderDataGenerator } from '../util/MockOrderDataGenerator';
+import { OrderStatusManager } from '../manager/OrderStatusManager';
 
 /**
  * 订单列表响应接口
@@ -231,6 +232,8 @@ export class OrderService {
 
       if (response.success) {
         console.log('取消订单成功');
+        // 通知订单状态变化
+        OrderStatusManager.getInstance().updateOrderStatus(orderId, OrderStatus.CANCELLED);
         return response;
       } else {
         console.error('取消订单失败:', response.error);
@@ -286,6 +289,8 @@ export class OrderService {
 
       if (response.success) {
         console.log('支付订单成功');
+        // 通知订单状态变化
+        OrderStatusManager.getInstance().updateOrderStatus(orderNumber, OrderStatus.CONFIRMED);
         return response;
       } else {
         console.error('支付订单失败:', response.error);

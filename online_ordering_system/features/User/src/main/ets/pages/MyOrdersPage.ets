@@ -2,6 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus ,PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
+import { OrderStatusSimulator } from '../service/OrderStatusSimulator';
 
 /**
  * 我的订单页面
@@ -16,6 +17,7 @@ export struct MyOrdersPage {
   @State showRemindDialog: boolean = false;
   @State showRepeatDialog: boolean = false;
   @State selectedOrder: Order | null = null;
+  @State isSimulating: boolean = false;
 
   aboutToAppear() {
     this.loadOrders();
@@ -65,7 +67,19 @@ export struct MyOrdersPage {
         .onClick(() => {
           this.refreshOrders();
         })
-      
+
+      // 状态模拟按钮
+      Button(this.isSimulating ? '停止模拟' : '开始模拟')
+        .fontSize(12)
+        .fontColor('#FFFFFF')
+        .backgroundColor(this.isSimulating ? '#FF6B35' : '#2196F3')
+        .borderRadius(4)
+        .height(28)
+        .padding({ left: 8, right: 8 })
+        .margin({ left: 8 })
+        .onClick(() => {
+          this.toggleSimulation();
+        })
 
     }
     .width('100%')
@@ -264,5 +278,34 @@ export struct MyOrdersPage {
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);
+  }
+
+  // 切换状态模拟
+  toggleSimulation() {
+    if (this.isSimulating) {
+      this.stopSimulation();
+    } else {
+      this.startSimulation();
+    }
+  }
+
+  // 开始状态模拟
+  startSimulation() {
+    if (this.orderViewModel.orders.length === 0) {
+      this.showToast('请先加载订单数据');
+      return;
+    }
+
+    const orderIds = this.orderViewModel.orders.map(order => order.orderId);
+    OrderStatusSimulator.getInstance().startSimulation(orderIds);
+    this.isSimulating = true;
+    this.showToast('开始模拟订单状态变化');
+  }
+
+  // 停止状态模拟
+  stopSimulation() {
+    OrderStatusSimulator.getInstance().stopSimulation();
+    this.isSimulating = false;
+    this.showToast('停止模拟订单状态变化');
   }
 }
