@@ -36,7 +36,7 @@ export struct HomePage {
   ];
   private viewModel: DishViewModel = new DishViewModel();
   @State categories: Category[] = [];
-  @State selectedCategory: Category | null = null;
+  @State @Watch('onSelectedCategoryChanged') selectedCategory: Category | null = null;
   @State dishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
   @State error?: string = undefined;
@@ -89,6 +89,27 @@ export struct HomePage {
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
     this.isRefreshing = false;
+  }
+
+  // 监听分类变化
+  private async onSelectedCategoryChanged() {
+    if (this.selectedCategory) {
+      await this.loadDishesByCategory();
+    }
+  }
+
+  // 根据选中分类加载菜品
+  private async loadDishesByCategory() {
+    if (!this.selectedCategory) return;
+    
+    this.status = LoadStatus.Loading;
+    this.error = undefined;
+    
+    await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    
+    this.dishes = this.viewModel.state.data;
+    this.status = this.viewModel.state.status;
+    this.error = this.viewModel.state.error;
   }
 
   build() {

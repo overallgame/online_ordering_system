@@ -14,7 +14,7 @@ export struct ComboRecommendPage {
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   private viewModel: ComboViewModel = new ComboViewModel();
   @State categories: Category[] = [];
-  @State selectedCategory: Category | null = null;
+  @State @Watch('onSelectedCategoryChanged') selectedCategory: Category | null = null;
   @State combos: Combo[] = [];
   @State allCombos: Combo[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
@@ -83,6 +83,33 @@ export struct ComboRecommendPage {
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
     this.isRefreshing = false;
+    if (this.searchText.trim()) {
+      this.filterCombos();
+    }
+  }
+
+  // 监听分类变化
+  private async onSelectedCategoryChanged() {
+    if (this.selectedCategory) {
+      await this.loadCombosByCategory();
+    }
+  }
+
+  // 根据选中分类加载套餐
+  private async loadCombosByCategory() {
+    if (!this.selectedCategory) return;
+    
+    this.status = LoadStatus.Loading;
+    this.error = undefined;
+    
+    await this.viewModel.loadCombosByCategoryId(this.selectedCategory.id);
+    
+    this.allCombos = this.viewModel.state.data;
+    this.combos = this.allCombos;
+    this.status = this.viewModel.state.status;
+    this.error = this.viewModel.state.error;
+    
+    // 如果有搜索条件，重新筛选
     if (this.searchText.trim()) {
       this.filterCombos();
     }

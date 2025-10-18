@@ -14,7 +14,7 @@ export struct DeliveryPage {
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
   private viewModel: DishViewModel = new DishViewModel();
   @State categories: Category[] = [];
-  @State selectedCategory: Category | null = null;
+  @State @Watch('onSelectedCategoryChanged') selectedCategory: Category | null = null;
   private cartViewModel: CartViewModel = new CartViewModel();
   @State dishes: Dish[] = [];
   @State allDishes: Dish[] = [];
@@ -83,6 +83,33 @@ export struct DeliveryPage {
     this.status = this.viewModel.state.status;
     this.error = this.viewModel.state.error;
     this.isRefreshing = false;
+    if (this.searchText.trim()) {
+      this.filterDishes();
+    }
+  }
+
+  // 监听分类变化
+  private async onSelectedCategoryChanged() {
+    if (this.selectedCategory) {
+      await this.loadDishesByCategory();
+    }
+  }
+
+  // 根据选中分类加载菜品
+  private async loadDishesByCategory() {
+    if (!this.selectedCategory) return;
+    
+    this.status = LoadStatus.Loading;
+    this.error = undefined;
+    
+    await this.viewModel.loadDishesByCategoryId(this.selectedCategory.id);
+    
+    this.allDishes = this.viewModel.state.data;
+    this.dishes = this.allDishes;
+    this.status = this.viewModel.state.status;
+    this.error = this.viewModel.state.error;
+    
+    // 如果有搜索条件，重新筛选
     if (this.searchText.trim()) {
       this.filterDishes();
     }

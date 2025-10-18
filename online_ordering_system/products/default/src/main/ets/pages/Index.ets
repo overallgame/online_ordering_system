@@ -5,6 +5,8 @@ import { UserPage } from 'user';
 import { AuthStateService } from '../service/AuthStateService';
 import { LoginPage, RegisterPage } from 'authentication';
 import { HomePage } from 'restaurant';
+import { AppDataManager } from 'common';
+import common from '@ohos.app.ability.common';
 
 @Entry
 @Component
@@ -16,14 +18,35 @@ struct Index {
   private tabsController: TabsController = new TabsController();
   private breakpointSystem: BreakpointSystem = new BreakpointSystem();
   private authStateService: AuthStateService = AuthStateService.getInstance();
+  private appDataManager: AppDataManager = AppDataManager.getInstance();
 
   aboutToAppear() {
     this.breakpointSystem.register();
-    this.checkAuthStatus();
+    this.initializeApp();
   }
 
   aboutToDisappear() {
     this.breakpointSystem.unregister();
+  }
+
+  private async initializeApp(): Promise<void> {
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      const initSuccess = await this.appDataManager.initialize(context);
+      
+      if (initSuccess) {
+        console.log('AppDataManager initialized successfully');
+        await this.checkAuthStatus();
+      } else {
+        console.error('Failed to initialize AppDataManager');
+        this.isLogin = false;
+        this.mainPathStack.pushPathByName('login', null);
+      }
+    } catch (error) {
+      console.error('App initialization error:', error);
+      this.isLogin = false;
+      this.mainPathStack.pushPathByName('login', null);
+    }
   }
 
   private async checkAuthStatus(): Promise<void> {

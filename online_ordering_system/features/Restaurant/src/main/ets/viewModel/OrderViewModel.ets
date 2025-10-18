@@ -1,149 +1,250 @@
-import { CartItem, Order, OrderItem, OrderStatus, OrderType, PaymentStatus } from 'common';
-// 订单状态枚举
-export enum OrderState {
-  IDLE = 'idle',
-  CREATING = 'creating',
-  CREATED = 'created',
-  PAYING = 'paying',
-  PAID = 'paid',
-  FAILED = 'failed'
-}
+import { Order, CartItem, OrderStatus, PaymentStatus } from 'common';
+import { OrderRepository } from '../repository/OrderRepository';
+import { OrderDataConverter } from '../util/OrderDataConverter';
 
-// 订单结果
-export interface OrderResult {
+// 订单操作结果接口
+interface OrderOperationResult {
   success: boolean;
   order?: Order;
   error?: string;
 }
 
-// 订单 ViewModel
+/**
+ * 订单ViewModel
+ * 负责订单相关的业务逻辑和状态管理
+ */
 export class OrderViewModel {
-  orderState: OrderState = OrderState.IDLE;
-  currentOrder: Order | null = null;
-  orders: Order[] = [];
+  private repository: OrderRepository;
+  private listeners: Array<(order: Order | null) => void> = [];
+  private isLoading: boolean = false;
+  private error?: string = undefined;
+  private currentOrder: Order | null = null;
 
-  // 创建订单
-  public async createOrder(
-    userId: string,
+  constructor() {
+    this.repository = OrderRepository.getInstance();
+  }
+
+  // ==================== 状态管理 ====================
+
+  /**
+   * 添加监听器
+   * @param listener 监听器函数
+   */
+  addListener(listener: (order: Order | null) => void): void {
+    this.listeners.push(listener);
+  }
+
+  /**
+   * 移除监听器
+   * @param listener 监听器函数
+   */
+  removeListener(listener: (order: Order | null) => void): void {
+    const index = this.listeners.indexOf(listener);
+    if (index > -1) {
+      this.listeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * 通知所有监听器
+   */
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener(this.currentOrder));
+  }
+
+  /**
+   * 获取当前订单
+   */
+  getCurrentOrder(): Order | null {
+    return this.currentOrder;
+  }
+
+  /**
+   * 获取加载状态
+   */
+  getIsLoading(): boolean {
+    return this.isLoading;
+  }
+
+  /**
+   * 获取错误信息
+   */
+  getError(): string | undefined {
+    return this.error;
+  }
+
+  /**
+   * 清除错误
+   */
+  clearError(): void {
+    this.error = undefined;
+  }
+
+  // ==================== 订单操作 ====================
+
+  /**
+   * 创建订单
+   * @param cartItems 购物车商品
+   * @param orderType 订单类型
+   * @param deliveryAddress 配送地址
+   * @param estimatedDeliveryTime 预计送达时间
+   * @param remark 备注
+   * @returns 订单创建结果
+   */
+  async createOrder(
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
     deliveryAddress?: string,
-    estimatedDeliveryTime?: number
-  ): Promise<OrderResult> {
-    this.orderState = OrderState.CREATING;
-
+    estimatedDeliveryTime?: number,
+    remark?: string
+  ): Promise<OrderOperationResult> {
     try {
-      const order = new Order();
-      order.orderId = this.generateOrderId();
-      order.userId = userId;
-      order.restaurantId = 'restaurant_001';
-      order.orderType = orderType === 'dine_in' ? OrderType.DINE_IN : OrderType.DELIVERY;
-      order.createTime = Date.now();
-      order.updateTime = Date.now();
-      order.status = OrderStatus.PENDING;
-      order.paymentStatus = PaymentStatus.PENDING;
-      
-      if (deliveryAddress) {
-        order.deliveryAddress = deliveryAddress;
-      }
-      
-      if (estimatedDeliveryTime) {
-        order.estimatedDeliveryTime = estimatedDeliveryTime;
+      // 参数验证
+      if (!cartItems || cartItems.length === 0) {
+        this.error = '购物车为空，无法创建订单';
+        return { success: false, error: this.error };
       }
 
-      // 转换购物车商品为订单商品
-      order.items = this.convertCartItemsToOrderItems(cartItems);
-      
-      // 计算金额
-      this.calculateOrderAmounts(order);
+      this.isLoading = true;
+      this.error = undefined;
 
-      // 保存订单
-      this.orders.push(order);
-      this.currentOrder = order;
-      this.orderState = OrderState.CREATED;
+      // 调用Repository创建订单
+      const result = await this.repository.createAndSubmitOrder(
+        cartItems,
+        orderType,
+        estimatedDeliveryTime,
+        remark
+      );
 
-      return { success: true, order };
+      if (result.success && result.data) {
+        // 转换API响应为Order对象
+        this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems);
+        this.notifyListeners();
+        
+        console.log('Order created successfully:', this.currentOrder.orderId);
+        return { success: true, order: this.currentOrder };
+      } else {
+        this.error = result.error || '订单创建失败';
+        return { success: false, error: this.error };
+      }
     } catch (error) {
-      this.orderState = OrderState.FAILED;
-      return { success: false, error: '创建订单失败' };
+      this.error = '网络错误，请检查网络连接';
+      console.error('Failed to create order:', error);
+      return { success: false, error: this.error };
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  // 支付订单
-  public async payOrder(orderId: string): Promise<boolean> {
-    this.orderState = OrderState.PAYING;
-
+  /**
+   * 支付订单
+   * @param orderId 订单ID
+   * @returns 支付结果
+   */
+  async payOrder(orderId: string): Promise<boolean> {
     try {
-      const order = this.orders.find(o => o.orderId === orderId);
-      if (order) {
-        // 模拟支付延迟
-        await new Promise<void>(resolve => setTimeout(resolve, 1000));
-        
-        order.paymentStatus = PaymentStatus.PAID;
-        order.status = OrderStatus.CONFIRMED;
-        order.updateTime = Date.now();
-        
-        this.orderState = OrderState.PAID;
-        return true;
+      this.isLoading = true;
+      this.error = undefined;
+
+      // 模拟支付过程
+      await new Promise<void>(resolve => setTimeout(resolve, 2000));
+
+      // 更新订单状态
+      if (this.currentOrder && this.currentOrder.orderId === orderId) {
+        this.currentOrder.paymentStatus = PaymentStatus.PAID;
+        this.currentOrder.status = OrderStatus.CONFIRMED;
+        this.notifyListeners();
       }
-      return false;
+
+      console.log('Order paid successfully:', orderId);
+      return true;
     } catch (error) {
-      this.orderState = OrderState.FAILED;
+      this.error = '支付失败，请重试';
+      console.error('Failed to pay order:', error);
       return false;
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  // 获取订单
-  public getOrder(orderId: string): Order | undefined {
-    return this.orders.find(o => o.orderId === orderId);
+  /**
+   * 取消订单
+   * @param orderId 订单ID
+   * @returns 取消结果
+   */
+  async cancelOrder(orderId: string): Promise<boolean> {
+    try {
+      this.isLoading = true;
+      this.error = undefined;
+
+      // 更新订单状态
+      if (this.currentOrder && this.currentOrder.orderId === orderId) {
+        this.currentOrder.status = OrderStatus.CANCELLED;
+        this.notifyListeners();
+      }
+
+      console.log('Order cancelled successfully:', orderId);
+      return true;
+    } catch (error) {
+      this.error = '取消订单失败';
+      console.error('Failed to cancel order:', error);
+      return false;
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  // 获取用户订单列表
-  public getUserOrders(userId: string): Order[] {
-    return this.orders.filter(o => o.userId === userId);
+  // ==================== 工具方法 ====================
+
+  /**
+   * 计算订单金额
+   * @param cartItems 购物车商品
+   * @param orderType 订单类型
+   * @returns 订单金额
+   */
+  calculateOrderAmount(cartItems: CartItem[], orderType: 'dine_in' | 'delivery'): number {
+    return this.repository.calculateOrderAmount(cartItems, orderType);
   }
 
-  // 重置状态
-  public resetState(): void {
-    this.orderState = OrderState.IDLE;
+  /**
+   * 计算预计送达时间
+   * @param cartItems 购物车商品
+   * @param orderType 订单类型
+   * @param scheduledTime 预约时间（可选）
+   * @returns 预计送达时间戳
+   */
+  calculateEstimatedDeliveryTime(
+    cartItems: CartItem[],
+    orderType: 'dine_in' | 'delivery',
+    scheduledTime?: number
+  ): number {
+    return this.repository.calculateEstimatedDeliveryTime(cartItems, orderType, scheduledTime);
+  }
+
+  /**
+   * 格式化订单时间
+   * @param timestamp 时间戳
+   * @returns 格式化后的时间字符串
+   */
+  formatOrderTime(timestamp: number): string {
+    return OrderDataConverter.formatOrderTime(timestamp);
+  }
+
+  /**
+   * 重置ViewModel状态
+   */
+  reset(): void {
     this.currentOrder = null;
+    this.error = undefined;
+    this.isLoading = false;
+    this.notifyListeners();
   }
 
-  // 转换购物车商品为订单商品
-  private convertCartItemsToOrderItems(cartItems: CartItem[]): OrderItem[] {
-    return cartItems.map(cartItem => {
-      const orderItem = new OrderItem();
-      orderItem.itemId = this.generateItemId();
-      orderItem.quantity = cartItem.quantity;
-      
-      if (cartItem.combo) {
-        orderItem.combo = cartItem.combo;
-        orderItem.unitPrice = cartItem.combo.price;
-      } else if (cartItem.dish) {
-        orderItem.dish = cartItem.dish;
-        orderItem.unitPrice = cartItem.dish.price;
-      }
-      
-      orderItem.totalPrice = orderItem.unitPrice * orderItem.quantity;
-      
-      return orderItem;
-    });
-  }
-
-  // 计算订单金额
-  private calculateOrderAmounts(order: Order): void {
-    order.totalAmount = order.items.reduce((total, item) => total + item.totalPrice, 0);
-    order.discountAmount = order.totalAmount * 0.25; // 25% 折扣
-    order.finalAmount = order.totalAmount - order.discountAmount;
-  }
-
-  // 生成订单ID
-  private generateOrderId(): string {
-    return 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  // 生成商品ID
-  private generateItemId(): string {
-    return 'ITEM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  /**
+   * 销毁ViewModel
+   */
+  destroy(): void {
+    this.listeners = [];
+    this.reset();
   }
 }
