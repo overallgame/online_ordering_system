@@ -4,6 +4,7 @@ import { PaymentMethod } from "./User";
 
 export class Order {
   orderId: string = '';
+  orderNumber: string = ''; // 订单号
   userId: string = '';
   restaurantId: string = '';
   items: Array<OrderItem> = [];

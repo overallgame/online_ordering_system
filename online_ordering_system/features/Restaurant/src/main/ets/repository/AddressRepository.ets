@@ -1,7 +1,8 @@
-import { AddressBook } from '../model/AddressBook';
-import { ApiResponse, AddressBookResponse } from '../model/AddressApiModels';
+import { AddressBook } from 'common/src/main/ets/model/AddressBook';
+import { AddressBookResponse } from '../model/AddressApiModels';
 import { AddressConverter } from '../util/AddressConverter';
 import { ApiClient, ApiEndpoints } from 'common';
+import { ApiResponseT } from '../model/ApiResponseT';
 
 export class AddressRepository {
   private static instance: AddressRepository;
@@ -20,7 +21,7 @@ export class AddressRepository {
 
   async getDefaultAddress(): Promise<AddressBook | null> {
     try {
-      const response = await this.apiClient.get<ApiResponse<AddressBookResponse>>(
+      const response = await this.apiClient.get<ApiResponseT<AddressBookResponse>>(
         ApiEndpoints.ADDRESS_DEFAULT
       );
       if (response.success && response.data && response.data.data) {

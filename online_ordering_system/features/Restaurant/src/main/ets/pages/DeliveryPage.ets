@@ -1,7 +1,5 @@
 import { promptAction } from '@kit.ArkUI';
 import { Dish, CartItem, Category } from 'common';
-import { BreakpointSystem } from 'utils';
-import { BreakpointTypeEnum } from 'utils/src/main/ets/utils/BreakpointSystem';
 import { DishViewModel } from '../viewModel/DishViewModel';
 import { CartViewModel } from '../viewModel/CartViewModel';
 import { LoadStatus } from '../util/DataState';
@@ -15,7 +13,6 @@ export struct DeliveryPage {
   private viewModel: DishViewModel = new DishViewModel();
   @State categories: Category[] = [];
   @State @Watch('onSelectedCategoryChanged') selectedCategory: Category | null = null;
-  private cartViewModel: CartViewModel = new CartViewModel('', '', 'delivery');
   @State dishes: Dish[] = [];
   @State allDishes: Dish[] = [];
   @State status: LoadStatus = LoadStatus.Idle;
@@ -23,25 +20,22 @@ export struct DeliveryPage {
   @State isRefreshing: boolean = false;
   @State searchText: string = '';
   // 购物车状态
+  private cartViewModel: CartViewModel = new CartViewModel('', '', 'delivery');
+  @State isCartLoading: boolean = false;
   @State cartItems: CartItem[] = [];
   @State cartTotalQuantity: number = 0;
   @State cartTotalAmount: number = 0;
   @State dishQuantities: Map<string, number> = new Map();
-  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
-  private breakpointSystem: BreakpointSystem = new BreakpointSystem();
   // 结算页状态
   @State showCheckout: boolean = false;
-  // 购物车操作状态
-  @State isCartLoading: boolean = false;
+
 
   aboutToAppear() {
-    this.breakpointSystem.register();
     this.loadCategories();
     this.initializeCart();
   }
 
   aboutToDisappear() {
-    this.breakpointSystem.unregister();
     this.cartViewModel.destroy();
   }
 
@@ -115,15 +109,31 @@ export struct DeliveryPage {
     }
   }
 
+  private onSearch() {
+    if (this.searchText.trim()) {
+      this.filterDishes();
+    } else {
+      this.dishes = this.allDishes;
+    }
+  }
+
+  // 筛选菜品
+  private filterDishes() {
+    const keyword = this.searchText.trim().toLowerCase();
+    this.dishes = this.allDishes.filter(dish =>
+    dish.name.toLowerCase().includes(keyword) ||
+    dish.description?.toLowerCase().includes(keyword) ||
+    dish.tags.some(tag => tag.toLowerCase().includes(keyword))
+    );
+  }
+
   private async initializeCart() {
     try {
-      // 设置购物车监听器
       this.cartViewModel.addListener((cart) => {
         this.cartItems = cart.items || [];
         this.cartTotalQuantity = cart.totalQuantity || 0;
         this.cartTotalAmount = cart.finalAmount || 0;
-        
-        // 更新dishQuantities映射
+
         const newQuantities = new Map<string, number>();
         this.cartItems.forEach((item: CartItem) => {
           if (item.dish && item.dish.dishId) {
@@ -145,21 +155,10 @@ export struct DeliveryPage {
       console.log('DeliveryPage: Cart initialized successfully');
     } catch (error) {
       console.error('Failed to initialize cart:', error);
-      // 确保购物车状态正确初始化
       this.cartItems = [];
       this.cartTotalQuantity = 0;
       this.cartTotalAmount = 0;
     }
-  }
-
-  // 筛选菜品
-  private filterDishes() {
-    const keyword = this.searchText.trim().toLowerCase();
-    this.dishes = this.allDishes.filter(dish =>
-    dish.name.toLowerCase().includes(keyword) ||
-    dish.description?.toLowerCase().includes(keyword) ||
-    dish.tags.some(tag => tag.toLowerCase().includes(keyword))
-    );
   }
 
   // 添加菜品到购物车
@@ -241,15 +240,6 @@ export struct DeliveryPage {
       this.isCartLoading = false;
     }
   }
-
-  private onSearch() {
-    if (this.searchText.trim()) {
-      this.filterDishes();
-    } else {
-      this.dishes = this.allDishes;
-    }
-  }
-
 
   build() {
     NavDestination() {
@@ -565,9 +555,7 @@ export struct DeliveryPage {
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .onClick(() => {
-              if (!this.isCartLoading) {
-                this.addToCart(dish.dishId);
-              }
+              this.addToCart(dish.dishId);
             })
           }
         }

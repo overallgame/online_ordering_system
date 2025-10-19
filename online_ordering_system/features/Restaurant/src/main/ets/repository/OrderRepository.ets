@@ -1,5 +1,5 @@
 import { ApiClient, ApiEndpoints, ApiResponse, CartItem } from 'common';
-import { OrderSubmitDTO, OrderSubmitVO } from '../model/OrderApiModels';
+import { OrderSubmitDTO, OrderSubmitVO, OrdersPaymentDTO, PaymentResponse } from '../model/OrderApiModels';
 import { OrderDataConverter } from '../util/OrderDataConverter';
 
 interface OrderApiResponse {
@@ -33,7 +33,7 @@ export class OrderRepository {
         };
       }
 
-      const response: ApiResponse<OrderApiResponse> = await this.apiClient.post(
+      const response = await this.apiClient.post<OrderApiResponse>(
         ApiEndpoints.ORDER_SUBMIT,
         orderSubmitDTO
       );
@@ -64,7 +64,6 @@ export class OrderRepository {
     addressBookId: number,
     estimatedDeliveryTime?: number,
     remark?: string,
-    isPaid: boolean = true,
   ): Promise<OrderApiResponse> {
     try {
       // 创建订单提交参数
@@ -74,11 +73,10 @@ export class OrderRepository {
         addressBookId,
         estimatedDeliveryTime,
         remark,
-        isPaid
       );
 
       // 提交订单
-      const result: ApiResponse<OrderApiResponse> = await this.submitOrder(orderSubmitDTO);
+      const result = await this.submitOrder(orderSubmitDTO);
 
       if (result.success && result.data) {
         return result.data;
@@ -95,6 +93,39 @@ export class OrderRepository {
         code: 500,
         msg: '创建订单失败',
         data: {} as OrderSubmitVO
+      };
+    }
+  }
+
+  // 订单支付
+  async payOrder(orderNumber: string, payMethod: number = 0): Promise<ApiResponse<PaymentResponse>> {
+    try {
+      const paymentDTO: OrdersPaymentDTO = {
+        orderNumber: orderNumber,
+        payMethod: payMethod
+      };
+
+      const response = await this.apiClient.put<PaymentResponse>(
+        '/user/order/payment',
+        paymentDTO
+      );
+
+      if (response.success && response.data) {
+        return response;
+      } else {
+        console.warn('Failed to pay order:', response.error);
+        return {
+          success: false,
+          error: response.error || '支付失败',
+          code: response.code || 500
+        };
+      }
+    } catch (error) {
+      console.error('Failed to pay order:', error);
+      return {
+        success: false,
+        error: '网络错误，请检查网络连接',
+        code: 500
       };
     }
   }

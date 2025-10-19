@@ -132,13 +132,11 @@ export struct OnlineOrderPage {
         this.cartItems = cart.items || [];
         this.cartTotalQuantity = cart.totalQuantity || 0;
         this.cartTotalAmount = cart.totalAmount || 0;
-        console.log(this.cartTotalQuantity.toString() + this.cartTotalAmount.toString() + "www")
 
         const newQuantities = new Map<string, number>();
         this.cartItems.forEach((item: CartItem) => {
           if (item.dish && item.dish.dishId) {
             newQuantities.set(item.dish.dishId, item.quantity);
-            console.log(item.quantity + "wwww")
           }
         });
         this.dishQuantities = newQuantities;

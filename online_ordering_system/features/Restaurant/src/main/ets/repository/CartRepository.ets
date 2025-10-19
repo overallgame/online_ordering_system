@@ -1,5 +1,6 @@
 import { Cart } from 'common';
 import { ApiClient, ApiEndpoints, ApiResponse } from 'common';
+import { ApiResponseT } from '../model/ApiResponseT';
 import { ShoppingCartItem, ShoppingCartDTO} from '../model/CartApiModels';
 import { CartDataConverter } from '../util/CartDataConverter';
 
@@ -19,13 +20,7 @@ export class CartRepository {
   // 查看购物车
   async getCartList(): Promise<Cart | null> {
     try {
-      interface CartListApiResponse {
-        code: number;
-        data: ShoppingCartItem[];
-        msg: string;
-      }
-
-      const response: ApiResponse<CartListApiResponse> = await this.apiClient.get(
+      const response = await this.apiClient.get<ApiResponseT<ShoppingCartItem[]>>(
         ApiEndpoints.CART_LIST
       );
       
@@ -48,13 +43,7 @@ export class CartRepository {
         dishFlavor
       };
 
-      interface CartAddApiResponse {
-        code: number;
-        data: string;
-        msg: string;
-      }
-
-      const response: ApiResponse<CartAddApiResponse> = await this.apiClient.post(
+      const response = await this.apiClient.post<ApiResponseT<string>>(
         ApiEndpoints.CART_ADD, 
         requestData
       );
@@ -81,13 +70,7 @@ export class CartRepository {
         dishFlavor
       };
 
-      interface CartRemoveApiResponse {
-        code: number;
-        data: string;
-        msg: string;
-      }
-
-      const response: ApiResponse<CartRemoveApiResponse> = await this.apiClient.post(
+      const response = await this.apiClient.post<ApiResponseT<string>>(
         ApiEndpoints.CART_REMOVE, 
         requestData
       );
@@ -108,13 +91,8 @@ export class CartRepository {
   // 清空购物车
   async clearCart(): Promise<boolean> {
     try {
-      interface CartClearApiResponse {
-        code: number;
-        data: string;
-        msg: string;
-      }
 
-      const response: ApiResponse<CartClearApiResponse> = await this.apiClient.delete(
+      const response = await this.apiClient.delete<ApiResponseT<string>> (
         ApiEndpoints.CART_CLEAR
       );
       

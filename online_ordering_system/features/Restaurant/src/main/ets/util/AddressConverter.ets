@@ -1,4 +1,4 @@
-import { AddressBook } from '../model/AddressBook';
+import { AddressBook } from 'common/src/main/ets/model/AddressBook';
 import { AddressBookResponse } from '../model/AddressApiModels';
 
 /**

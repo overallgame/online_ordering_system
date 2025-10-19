@@ -1,5 +1,5 @@
 import { Dish, SpiceLevel, Category } from 'common';
-import { Result, ok, err } from '../util/Result';
+import { Result, ok } from '../util/Result';
 import { ApiClient, ApiEndpoints } from 'common';
 import { DishListResponse } from '../model/DishApiModels';
 import { DishDataConverter } from '../util/DishDataConverter';

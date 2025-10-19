@@ -4,11 +4,6 @@ import { ApiClient, ApiEndpoints } from 'common';
 import { SetmealApiResponse, SetmealDishApiResponse } from '../model/ComboApiModels';
 import { ComboDataConverter } from '../util/ComboDataConverter';
 
-export interface CombosPage {
-  items: Array<Combo>;
-  hasMore: boolean;
-}
-
 export class ComboRepository {
   private apiClient: ApiClient = ApiClient.getInstance();
 

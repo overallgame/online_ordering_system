@@ -1,11 +1,11 @@
-import { Order, CartItem } from 'common';
+import { Order, CartItem, PaymentStatus } from 'common';
 import { OrderRepository } from '../repository/OrderRepository';
 import { OrderDataConverter } from '../util/OrderDataConverter';
 
 // 订单操作结果接口
 interface OrderOperationResult {
   success: boolean;
-  order?: Order;
+  order?: Order | null;
   error?: string;
 }
 
@@ -60,7 +60,6 @@ export class OrderViewModel {
         addressBookId,
         estimatedDeliveryTime,
         remark,
-        isPaid,
       );
       if (result.code === 1 && result.data) {
         this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems, isPaid);
@@ -75,6 +74,29 @@ export class OrderViewModel {
       console.error('Failed to create order:', error);
       return { success: false, error: this.error };
     } finally {
+    }
+  }
+
+  // 支付订单
+  async payOrder(orderNumber: string, payMethod: number = 0): Promise<OrderOperationResult> {
+    try {
+      this.error = undefined;
+      const result = await this.repository.payOrder(orderNumber, payMethod);
+      
+      if (result.success && result.data) {
+        if (this.currentOrder) {
+          this.currentOrder.paymentStatus = PaymentStatus.PAID;
+          this.notifyListeners();
+        }
+        return { success: true, order: this.currentOrder };
+      } else {
+        this.error = result.error || '支付失败';
+        return { success: false, error: this.error };
+      }
+    } catch (error) {
+      this.error = '网络错误，请检查网络连接';
+      console.error('Failed to pay order:', error);
+      return { success: false, error: this.error };
     }
   }
 

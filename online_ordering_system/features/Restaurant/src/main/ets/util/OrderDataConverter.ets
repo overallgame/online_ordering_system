@@ -12,6 +12,7 @@ export class OrderDataConverter {
   static convertOrderSubmitToOrder(orderSubmitVO: OrderSubmitVO, cartItems?: CartItem[], isPaid: boolean = true): Order {
     const order = new Order();
     order.orderId = orderSubmitVO.id.toString();
+    order.orderNumber = orderSubmitVO.orderNumber; // 赋值订单号
     order.totalAmount = orderSubmitVO.orderAmount;
     order.finalAmount = orderSubmitVO.orderAmount;
     order.createTime = new Date(orderSubmitVO.orderTime).getTime();
@@ -52,7 +53,6 @@ export class OrderDataConverter {
     addressBookId: number,
     estimatedDeliveryTime?: number,
     remark?: string,
-    isPaid: boolean = true
   ): OrderSubmitDTO {
     // 计算总金额
     const baseAmount = cartItems.reduce((total, item) => {
@@ -78,7 +78,7 @@ export class OrderDataConverter {
       deliveryStatus: orderType === 'delivery' ? 1 : 0,
       estimatedDeliveryTime: formatDeliveryTime(estimatedDeliveryTime),
       packAmount: orderType === 'delivery' ? 2 : 0,
-      payMethod: isPaid ? 1 : 0,
+      payMethod: 1,
       remark: remark || '',
       tablewareNumber: orderType === 'delivery' ? 1 : 0,
       tablewareStatus: orderType === 'delivery' ? 1 : 0
