@@ -1,48 +1,47 @@
 import { promptAction } from '@kit.ArkUI';
 import { CartItem } from 'common';
+import { TimeUtils } from '../util/TimeUtils';
 
 @Component
 export struct TimePickerComponent {
   @Link showTimePicker: boolean;
   @Prop cartItems: CartItem[] = [];
   @Link scheduledTime: string;
-
-  // 计算准备时间
-  private calculatePreparationTime(): number {
-    let maxPreparationTime = 0;
-    this.cartItems.forEach(item => {
-      const preparationTime = item.combo?.preparationTime || item.dish?.preparationTime || 0;
-      maxPreparationTime = Math.max(maxPreparationTime, preparationTime);
-    });
-    return maxPreparationTime;
-  }
-
-  // 格式化时间
-  private formatTime(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
+  @State selectedTimeSlot: string = '';
+  @State isTimeSlotSelected: boolean = false;
 
   // 选择预约时间
   private selectScheduledTime(hour: number, minute: number): void {
-    const now = new Date();
-    const selectedTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-    const preparationTime = this.calculatePreparationTime();
-    const earliestDeliveryTime = new Date(now.getTime() + preparationTime * 60 * 1000);
-
-    // 检查选择的时间是否早于最早送达时间
-    if (selectedTime < earliestDeliveryTime) {
-      // 显示错误提示
+    if (!TimeUtils.validateSelectedTime(hour, minute, this.cartItems)) {
+      const preparationTime = TimeUtils.calculatePreparationTime(this.cartItems);
+      const now = new Date();
+      const earliestDeliveryTime = new Date(now.getTime() + preparationTime * 60 * 1000);
+      
       promptAction.showToast({
-        message: `最早送达时间为 ${this.formatTime(earliestDeliveryTime)}`,
+        message: `最早送达时间为 ${TimeUtils.formatTime(earliestDeliveryTime)}`,
         duration: 2000
       });
       return;
     }
 
+    // 设置选中的时间槽
+    this.selectedTimeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    this.isTimeSlotSelected = true;
+  }
+
+  // 确认选择的时间
+  private confirmTimeSelection(): void {
+    if (!this.isTimeSlotSelected) {
+      promptAction.showToast({ message: '请选择送达时间', duration: 1500 });
+      return;
+    }
+
+    const timeParts = this.selectedTimeSlot.split(':');
+    const hour = parseInt(timeParts[0]);
+    const minute = parseInt(timeParts[1]);
+    
     // 格式化时间字符串
-    const timeString = `预约送 ${this.formatTime(selectedTime)}送达`;
+    const timeString = `预约送 ${TimeUtils.formatTimeDisplay(hour, minute)}送达`;
 
     // 设置选择的时间并关闭时间选择器
     this.scheduledTime = timeString;
@@ -51,61 +50,42 @@ export struct TimePickerComponent {
 
   // 生成时间选择槽
   private generateTimeSlots(): string[] {
-    const timeSlots: string[] = [];
-    const now = new Date();
-    const preparationTime = this.calculatePreparationTime();
-    
-    // 计算最早送达时间（当前时间 + 准备时间）
-    const earliestDeliveryTime = new Date(now.getTime() + preparationTime * 60 * 1000);
-    const earliestHour = earliestDeliveryTime.getHours();
-    const earliestMinute = earliestDeliveryTime.getMinutes();
-    
-    // 从最早送达时间开始生成时间槽
-    let currentHour = earliestHour;
-    let currentMinute = earliestMinute;
-    
-    // 如果分钟不是0或30，调整到下一个30分钟间隔
-    if (currentMinute > 0 && currentMinute <= 30) {
-      currentMinute = 30;
-    } else if (currentMinute > 30) {
-      currentHour += 1;
-      currentMinute = 0;
-    }
-    
-    // 生成12个时间槽
-    for (let i = 0; i < 12; i++) {
-      if (currentHour >= 24) {
-        break; // 超过24小时就停止
-      }
-      
-      const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-      timeSlots.push(timeString);
-      
-      // 下一个时间槽（30分钟后）
-      currentMinute += 30;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
-      }
-    }
-    
-    return timeSlots;
+    return TimeUtils.generateTimeSlots(this.cartItems);
+  }
+
+  // 检查时间槽是否被选中
+  private checkTimeSlotSelected(timeSlot: string): boolean {
+    return this.selectedTimeSlot === timeSlot;
+  }
+
+  // 获取时间槽的背景色
+  private getTimeSlotBackgroundColor(timeSlot: string): string {
+    return this.checkTimeSlotSelected(timeSlot) ? '#FF6B6B' : '#333333';
+  }
+
+  // 获取时间槽的文字颜色
+  private getTimeSlotTextColor(timeSlot: string): string {
+    return this.checkTimeSlotSelected(timeSlot) ? '#FFFFFF' : '#CCCCCC';
+  }
+
+  // 重置选择状态
+  private resetSelection(): void {
+    this.selectedTimeSlot = '';
+    this.isTimeSlotSelected = false;
   }
 
   build() {
     Stack() {
-      // 背景遮罩
       Column()
         .width('100%')
         .height('100%')
         .backgroundColor('rgba(0, 0, 0, 0.5)')
         .onClick(() => {
+          this.resetSelection();
           this.showTimePicker = false;
         })
 
-      // 时间选择器内容
       Column() {
-        // 顶部拖拽条
         Row() {
           Column()
             .width(40)
@@ -117,7 +97,6 @@ export struct TimePickerComponent {
         .justifyContent(FlexAlign.Center)
         .padding({ top: 8, bottom: 8 })
 
-        // 标题
         Row() {
           Text('选择送达时间')
             .fontSize(18)
@@ -126,21 +105,33 @@ export struct TimePickerComponent {
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
+        .padding({ bottom: 8 })
+
+        Row() {
+          Text('请选择您希望的送达时间')
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
         .padding({ bottom: 16 })
 
-        // 时间槽网格
         Grid() {
           ForEach(this.generateTimeSlots(), (timeSlot: string) => {
             GridItem() {
               Text(timeSlot)
                 .fontSize(14)
-                .fontColor(Color.White)
-                .fontWeight(FontWeight.Normal)
+                .fontColor(this.getTimeSlotTextColor(timeSlot))
+                .fontWeight(this.checkTimeSlotSelected(timeSlot) ? FontWeight.Medium : FontWeight.Normal)
                 .textAlign(TextAlign.Center)
                 .width('100%')
-                .height(40)
-                .backgroundColor('#333333')
+                .height(44)
+                .backgroundColor(this.getTimeSlotBackgroundColor(timeSlot))
                 .borderRadius(8)
+                .border({
+                  width: this.checkTimeSlotSelected(timeSlot) ? 2 : 1,
+                  color: this.checkTimeSlotSelected(timeSlot) ? '#FF6B6B' : '#444444'
+                })
                 .onClick(() => {
                   const timeParts = timeSlot.split(':');
                   const hour = parseInt(timeParts[0]);
@@ -155,22 +146,41 @@ export struct TimePickerComponent {
         .columnsGap(12)
         .padding({ left: 16, right: 16, bottom: 20 })
 
-        // 取消按钮
         Row() {
-          Text('取消')
-            .fontSize(16)
-            .fontColor('#999999')
-            .fontWeight(FontWeight.Normal)
+          Row() {
+            Text('取消')
+              .fontSize(16)
+              .fontColor('#999999')
+              .fontWeight(FontWeight.Normal)
+          }
+          .width('48%')
+          .height(48)
+          .backgroundColor('#333333')
+          .borderRadius(8)
+          .justifyContent(FlexAlign.Center)
+          .onClick(() => {
+            this.resetSelection();
+            this.showTimePicker = false;
+          })
+
+          Row() {
+            Text('确认')
+              .fontSize(16)
+              .fontColor(Color.White)
+              .fontWeight(FontWeight.Medium)
+          }
+          .width('48%')
+          .height(48)
+          .backgroundColor(this.isTimeSlotSelected ? '#FF6B6B' : '#666666')
+          .borderRadius(8)
+          .justifyContent(FlexAlign.Center)
+          .onClick(() => {
+            this.confirmTimeSelection();
+          })
         }
         .width('100%')
-        .height(48)
-        .backgroundColor('#333333')
-        .borderRadius(8)
-        .justifyContent(FlexAlign.Center)
-        .margin({ left: 16, right: 16, bottom: 16 })
-        .onClick(() => {
-          this.showTimePicker = false;
-        })
+        .justifyContent(FlexAlign.SpaceBetween)
+        .padding({ left: 16, right: 16, bottom: 16 })
       }
       .width('100%')
       .backgroundColor('#1A1A1A')

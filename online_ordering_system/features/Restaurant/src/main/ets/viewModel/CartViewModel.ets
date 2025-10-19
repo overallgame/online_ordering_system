@@ -1,4 +1,4 @@
-import { Cart, CartItem, Dish, Combo } from 'common';
+import { Cart, CartItem } from 'common';
 import { CartRepository } from '../repository/CartRepository';
 
 export class CartViewModel {

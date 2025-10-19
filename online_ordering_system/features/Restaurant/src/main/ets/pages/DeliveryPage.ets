@@ -692,6 +692,7 @@ export struct DeliveryPage {
     CheckoutPage({
       sourceProp: 'delivery',
       cartItemsProp: this.cartViewModel.getItems(),
+      cartViewModel: this.cartViewModel,
       showCheckout: $showCheckout
     })
   }

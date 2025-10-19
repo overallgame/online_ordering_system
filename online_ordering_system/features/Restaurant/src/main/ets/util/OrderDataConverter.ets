@@ -8,9 +8,9 @@ interface ValidationResult {
 }
 
 export class OrderDataConverter {
+
   static convertOrderSubmitToOrder(orderSubmitVO: OrderSubmitVO, cartItems?: CartItem[], isPaid: boolean = true): Order {
     const order = new Order();
-    
     order.orderId = orderSubmitVO.id.toString();
     order.totalAmount = orderSubmitVO.orderAmount;
     order.finalAmount = orderSubmitVO.orderAmount;
@@ -35,7 +35,6 @@ export class OrderDataConverter {
       orderItem.customizations = [];
       orderItem.note = cartItem.note || '';
 
-      // 设置商品信息
       if (cartItem.dish) {
         orderItem.dish = cartItem.dish;
       }
@@ -50,6 +49,7 @@ export class OrderDataConverter {
   static createOrderSubmitDTO(
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
+    addressBookId: number,
     estimatedDeliveryTime?: number,
     remark?: string,
     isPaid: boolean = true
@@ -73,12 +73,12 @@ export class OrderDataConverter {
     };
 
     return {
-      addressBookId: orderType === 'delivery' ? 1 : 0,
+      addressBookId: addressBookId,
       amount: totalAmount,
       deliveryStatus: orderType === 'delivery' ? 1 : 0,
       estimatedDeliveryTime: formatDeliveryTime(estimatedDeliveryTime),
       packAmount: orderType === 'delivery' ? 2 : 0,
-      payMethod: isPaid ? 1 : 0, // 1=已支付, 0=未支付
+      payMethod: isPaid ? 1 : 0,
       remark: remark || '',
       tablewareNumber: orderType === 'delivery' ? 1 : 0,
       tablewareStatus: orderType === 'delivery' ? 1 : 0

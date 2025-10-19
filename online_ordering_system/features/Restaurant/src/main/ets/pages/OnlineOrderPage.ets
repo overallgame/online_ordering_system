@@ -665,6 +665,7 @@ export struct OnlineOrderPage {
     CheckoutPage({
       sourceProp: 'online',
       cartItemsProp: this.cartViewModel.getItems(),
+      cartViewModel: this.cartViewModel,
       showCheckout: $showCheckout
     })
   }

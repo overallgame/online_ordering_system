@@ -2,6 +2,12 @@ import { ApiClient, ApiEndpoints, ApiResponse, CartItem } from 'common';
 import { OrderSubmitDTO, OrderSubmitVO } from '../model/OrderApiModels';
 import { OrderDataConverter } from '../util/OrderDataConverter';
 
+interface OrderApiResponse {
+  code: number;
+  data: OrderSubmitVO;
+  msg: string;
+}
+
 export class OrderRepository {
   private static instance: OrderRepository;
   private apiClient: ApiClient = ApiClient.getInstance();
@@ -15,7 +21,7 @@ export class OrderRepository {
     return OrderRepository.instance;
   }
 
-  async submitOrder(orderSubmitDTO: OrderSubmitDTO): Promise<ApiResponse<OrderSubmitVO>> {
+  async submitOrder(orderSubmitDTO: OrderSubmitDTO): Promise<ApiResponse<OrderApiResponse>> {
     try {
       // 验证参数
       const validation = OrderDataConverter.validateOrderSubmitDTO(orderSubmitDTO);
@@ -27,13 +33,12 @@ export class OrderRepository {
         };
       }
 
-      const response: ApiResponse<OrderSubmitVO> = await this.apiClient.post(
+      const response: ApiResponse<OrderApiResponse> = await this.apiClient.post(
         ApiEndpoints.ORDER_SUBMIT,
         orderSubmitDTO
       );
 
       if (response.success && response.data) {
-        console.log('Order submitted successfully:', response.data.orderNumber);
         return response;
       } else {
         console.warn('Failed to submit order:', response.error);
@@ -56,93 +61,41 @@ export class OrderRepository {
   async createAndSubmitOrder(
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
+    addressBookId: number,
     estimatedDeliveryTime?: number,
     remark?: string,
-    isPaid: boolean = true
-  ): Promise<ApiResponse<OrderSubmitVO>> {
+    isPaid: boolean = true,
+  ): Promise<OrderApiResponse> {
     try {
       // 创建订单提交参数
       const orderSubmitDTO = OrderDataConverter.createOrderSubmitDTO(
         cartItems,
         orderType,
+        addressBookId,
         estimatedDeliveryTime,
         remark,
         isPaid
       );
 
       // 提交订单
-      return await this.submitOrder(orderSubmitDTO);
+      const result: ApiResponse<OrderApiResponse> = await this.submitOrder(orderSubmitDTO);
+
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        return {
+          code: result.code || 500,
+          msg: result.error || '订单创建失败',
+          data: {} as OrderSubmitVO
+        };
+      }
     } catch (error) {
       console.error('Failed to create and submit order:', error);
       return {
-        success: false,
-        error: '创建订单失败',
-        code: 500
+        code: 500,
+        msg: '创建订单失败',
+        data: {} as OrderSubmitVO
       };
-    }
-  }
-
-  async submitOrderWithRetry(
-    orderSubmitDTO: OrderSubmitDTO,
-    maxRetries: number = 3
-  ): Promise<ApiResponse<OrderSubmitVO>> {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const result = await this.submitOrder(orderSubmitDTO);
-        if (result.success) {
-          return result;
-        }
-        
-        console.warn(`Order submit attempt ${i + 1} failed, retrying...`);
-      } catch (error) {
-        console.error(`Order submit attempt ${i + 1} failed:`, error);
-        if (i === maxRetries - 1) {
-          return {
-            success: false,
-            error: '订单提交失败，请重试',
-            code: 500
-          };
-        }
-      }
-    }
-    
-    return {
-      success: false,
-      error: '订单提交失败，请重试',
-      code: 500
-    };
-  }
-
-  calculateOrderAmount(cartItems: CartItem[], orderType: 'dine_in' | 'delivery'): number {
-    const baseAmount = cartItems.reduce((total, item) => {
-      const price = item.combo?.price || item.dish?.price || 0;
-      return total + (price * item.quantity);
-    }, 0);
-
-    // 外卖需要加打包费
-    const packAmount = orderType === 'delivery' ? 2 : 0;
-    
-    return baseAmount + packAmount;
-  }
-
-  calculateEstimatedDeliveryTime(
-    cartItems: CartItem[],
-    orderType: 'dine_in' | 'delivery',
-    scheduledTime?: number
-  ): number {
-    if (scheduledTime) {
-      return scheduledTime;
-    }
-
-    const now = new Date();
-    const preparationTime = OrderDataConverter.calculatePreparationTime(cartItems);
-    
-    if (orderType === 'delivery') {
-      // 外卖：准备时间 + 15分钟配送时间
-      return now.getTime() + (preparationTime + 15) * 60 * 1000;
-    } else {
-      // 堂食：准备时间
-      return now.getTime() + preparationTime * 60 * 1000;
     }
   }
 }

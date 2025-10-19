@@ -683,6 +683,7 @@ export struct ComboRecommendPage {
     CheckoutPage({
       sourceProp: 'combo',
       cartItemsProp: this.cartViewModel.getItems(),
+      cartViewModel: this.cartViewModel,
       showCheckout: $showCheckout
     })
   }

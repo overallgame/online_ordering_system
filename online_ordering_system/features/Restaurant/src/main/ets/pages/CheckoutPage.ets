@@ -4,13 +4,17 @@ import { User } from 'common';
 import { AppDataManager } from 'common';
 import { OrderViewModel } from '../viewModel/OrderViewModel';
 import { CartViewModel } from '../viewModel/CartViewModel';
+import { AddressViewModel } from '../viewModel/AddressViewModel';
+import { AddressBook } from '../model/AddressBook';
 import { PageName, PaymentSuccessParams } from '../util/NavigationTypes';
 import { TimePickerComponent } from '../view/TimePickerComponent';
+import { TimeUtils } from '../util/TimeUtils';
 
 @Component
 export struct CheckoutPage {
   @Prop sourceProp?: string = '';
   @Prop cartItemsProp?: CartItem[] = [];
+  @Prop cartViewModel: CartViewModel;
   @Link showCheckout: boolean;
 
   @Consume('restaurantPathStack') restaurantPathStack: NavPathStack;
@@ -18,6 +22,7 @@ export struct CheckoutPage {
   @State cartItems: CartItem[] = [];
   @State orderType: 'dine_in' | 'delivery' = 'dine_in';
   @State currentUser: User | null = null;
+  @State currentAddress: AddressBook | null = null;
   @State deliveryTime: string = '';
   @State scheduledTime: string = '';
   @State isScheduled: boolean = false;
@@ -25,9 +30,10 @@ export struct CheckoutPage {
   @State totalAmount: number = 0;
   @State discountAmount: number = 0;
   @State finalAmount: number = 0;
+  @State isAddressLoading: boolean = false;
   private userListener?: (user: User | null) => void;
   private orderViewModel: OrderViewModel = new OrderViewModel();
-  private cartViewModel: CartViewModel = new CartViewModel();
+  private addressViewModel: AddressViewModel = new AddressViewModel();
 
   aboutToAppear() {
     if (this.sourceProp !== undefined && this.cartItemsProp !== undefined) {
@@ -42,6 +48,7 @@ export struct CheckoutPage {
     }
     this.loadCurrentUser();
     this.loadCartData();
+    this.loadDefaultAddress();
     this.initializeDeliveryTime();
   }
 
@@ -58,44 +65,39 @@ export struct CheckoutPage {
   // 加载购物车数据
   private async loadCartData(): Promise<void> {
     try {
-      this.cartViewModel.addListener((cart) => {
-        this.cartItems = cart.items;
-        this.calculateTotals();
-      });
+      if (this.cartViewModel) {
+        this.cartViewModel.addListener((cart) => {
+          this.cartItems = cart.items;
+          this.calculateTotals();
+        });
 
-      await this.cartViewModel.loadCart();
+        await this.cartViewModel.loadCart();
+      } else {
+        this.cartItems = this.cartItemsProp || [];
+        this.calculateTotals();
+      }
     } catch (error) {
       console.error('Failed to load cart data:', error);
     }
   }
 
-  // 计算立即送达时间
-  private initializeDeliveryTime(): void {
-    const now = new Date();
-    const preparationTime = this.calculatePreparationTime();
-
-    const deliveryTime = new Date(now.getTime() + (preparationTime + 15) * 60 * 1000);
-
-    const startTime = new Date(now.getTime() + preparationTime * 60 * 1000);
-    const endTime = deliveryTime;
-
-    const formatTime = (date: Date) => {
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
-    };
-
-    this.deliveryTime = `立即送达(${formatTime(startTime)}-${formatTime(endTime)})`;
+  // 加载默认地址
+  private async loadDefaultAddress(): Promise<void> {
+    this.isAddressLoading = true;
+    
+    try {
+      // 加载默认地址
+      this.currentAddress = await this.addressViewModel.loadDefaultAddress();
+    } catch (error) {
+      console.error('Failed to load default address:', error);
+    } finally {
+      this.isAddressLoading = false;
+    }
   }
 
-  // 计算准备时间
-  private calculatePreparationTime(): number {
-    let maxPreparationTime = 0;
-    this.cartItems.forEach((item: CartItem) => {
-      const preparationTime = item.combo?.preparationTime || item.dish?.preparationTime || 0;
-      maxPreparationTime = Math.max(maxPreparationTime, preparationTime);
-    });
-    return maxPreparationTime;
+  // 计算立即送达时间
+  private initializeDeliveryTime(): void {
+    this.deliveryTime = TimeUtils.calculateImmediateDeliveryTime(this.cartItems);
   }
 
   // 计算总金额
@@ -116,7 +118,6 @@ export struct CheckoutPage {
 
   build() {
     Stack() {
-      // 背景遮罩
       Column()
         .width('100%')
         .height('100%')
@@ -125,7 +126,6 @@ export struct CheckoutPage {
           this.showCheckout = false;
         })
 
-      // 结算页内容
       Column() {
         this.buildDragHandle()
 
@@ -134,11 +134,8 @@ export struct CheckoutPage {
             if (this.source === 'combo') {
               this.buildOrderTypeCard()
             }
-
             this.buildDeliveryCard()
-
             this.buildCartItemsCard()
-
             Column().height(20)
           }
           .padding({ left: 16, right: 16 })
@@ -244,17 +241,32 @@ export struct CheckoutPage {
       if (this.orderType === 'delivery') {
         Row() {
           Column() {
-            Text(this.currentUser?.address || '请设置收货地址')
-              .fontSize(16)
-              .fontColor(Color.White)
-              .fontWeight(FontWeight.Medium)
+            if (this.isAddressLoading) {
+              Row() {
+                LoadingProgress()
+                  .width(16)
+                  .height(16)
+                Text(' 正在加载地址...')
+                  .fontSize(14)
+                  .fontColor('#999999')
+                  .margin({ left: 8 })
+              }
               .alignSelf(ItemAlign.Start)
+            } else {
+              Text(this.currentAddress?.getFullAddress() || '请设置收货地址')
+                .fontSize(16)
+                .fontColor(Color.White)
+                .fontWeight(FontWeight.Medium)
+                .alignSelf(ItemAlign.Start)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-            Text(`${this.currentUser?.username || '用户'} ${this.currentUser?.phone || ''}`)
-              .fontSize(14)
-              .fontColor('#999999')
-              .margin({ top: 4 })
-              .alignSelf(ItemAlign.Start)
+              Text(this.currentAddress?.getContactInfo() || `${this.currentUser?.username || '用户'} ${this.currentUser?.phone || ''}`)
+                .fontSize(14)
+                .fontColor('#999999')
+                .margin({ top: 4 })
+                .alignSelf(ItemAlign.Start)
+            }
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
@@ -267,14 +279,15 @@ export struct CheckoutPage {
         .width('100%')
         .padding({ top: 16, bottom: 16 })
         .onClick(() => {
-          // 跳转到地址选择页面
+          // 可以跳转到地址管理页面
+          promptAction.showToast({ message: '跳转到地址管理页面', duration: 1500 });
         })
       }
 
       Column() {
         Row() {
           Row() {
-            Text(this.isScheduled ? this.deliveryTime : this.deliveryTime)
+            Text(this.deliveryTime)
               .fontSize(16)
               .fontColor(this.isScheduled ? '#999999' : '#FF6B6B')
               .fontWeight(this.isScheduled ? FontWeight.Normal : FontWeight.Medium)
@@ -311,7 +324,7 @@ export struct CheckoutPage {
 
         Row() {
           Row() {
-            Text(this.isScheduled ? this.scheduledTime : '预约送 选择时间 >')
+            Text(this.isScheduled ? TimeUtils.formatTimeDisplayString(this.scheduledTime) : '预约送 选择时间 >')
               .fontSize(16)
               .fontColor(this.isScheduled ? '#FF6B6B' : '#999999')
               .fontWeight(this.isScheduled ? FontWeight.Medium : FontWeight.Normal)
@@ -439,7 +452,6 @@ export struct CheckoutPage {
       .margin({ bottom: 16 })
 
       Row() {
-        // 生成订单按钮
         Row() {
           Text('生成订单')
             .fontSize(16)
@@ -453,10 +465,9 @@ export struct CheckoutPage {
         .border({ width: 1, color: '#FF6B6B' })
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
-          this.handleCreateOrder(false); // false = 未支付
+          this.handleCreateOrder(false);
         })
 
-        // 立即结算按钮
         Row() {
           Text('立即结算')
             .fontSize(16)
@@ -469,7 +480,7 @@ export struct CheckoutPage {
         .borderRadius(8)
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
-          this.handleCreateOrder(true); // true = 已支付
+          this.handleCreateOrder(true);
         })
       }
       .width('100%')
@@ -485,53 +496,34 @@ export struct CheckoutPage {
   // 处理订单创建
   private async handleCreateOrder(isPaid: boolean): Promise<void> {
     if (!this.currentUser) {
-      promptAction.showToast({
-        message: '请先登录',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '请先登录', duration: 2000 });
       return;
     }
-
     if (this.cartItems.length === 0) {
-      promptAction.showToast({
-        message: '购物车为空',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '购物车为空', duration: 2000 });
       return;
     }
-
     try {
       // 计算预计送达时间
-      const estimatedDeliveryTime = this.isScheduled ? this.calculateScheduledDeliveryTime() : undefined;
-      
+      const estimatedDeliveryTime = this.isScheduled ? TimeUtils.calculateScheduledDeliveryTimestamp(this.scheduledTime) : undefined;
       // 创建订单
       const orderResult = await this.orderViewModel.createOrder(
         this.cartItems,
         this.orderType,
-        this.orderType === 'delivery' ? this.currentUser.address : undefined,
+        this.currentAddress!!.id,
         estimatedDeliveryTime,
         this.isScheduled ? '预约订单' : '',
-        isPaid // 传递支付状态
+        isPaid,
       );
-
       if (!orderResult.success || !orderResult.order) {
-        promptAction.showToast({
-          message: orderResult.error || '创建订单失败',
-          duration: 2000
-        });
+        promptAction.showToast({ message: orderResult.error || '创建订单失败', duration: 2000 });
         return;
       }
-
       // 根据支付状态显示不同的成功信息
       if (isPaid) {
-        promptAction.showToast({
-          message: '订单创建成功并已支付！',
-          duration: 2000
-        });
-        
+        promptAction.showToast({ message: '订单创建成功并已支付！', duration: 2000 });
         // 清空购物车
         await this.cartViewModel.clearCart();
-
         const paymentParams: PaymentSuccessParams = {
           orderId: orderResult.order.orderId,
           totalAmount: orderResult.order.finalAmount
@@ -541,39 +533,16 @@ export struct CheckoutPage {
           this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
         }, 300);
       } else {
-        promptAction.showToast({
-          message: '订单创建成功，请稍后支付！',
-          duration: 2000
-        });
-        
+        promptAction.showToast({ message: '订单创建成功，请稍后支付！', duration: 2000 });
         // 清空购物车
         await this.cartViewModel.clearCart();
-        
         // 关闭结算页
         this.showCheckout = false;
       }
     } catch (error) {
       console.error('Order processing error:', error);
-      promptAction.showToast({
-        message: '订单处理出错',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '订单处理出错', duration: 2000 });
     }
-  }
-
-  // 计算预约送达时间
-  private calculateScheduledDeliveryTime(): number {
-    if (!this.scheduledTime) return 0;
-    
-    const now = new Date();
-    const timeMatch = this.scheduledTime.match(/(\d{2}):(\d{2})/);
-    if (timeMatch) {
-      const hour = parseInt(timeMatch[1]);
-      const minute = parseInt(timeMatch[2]);
-      const scheduledTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-      return scheduledTime.getTime();
-    }
-    return 0;
   }
 
   // 页面销毁时清理监听器
@@ -582,6 +551,6 @@ export struct CheckoutPage {
       const appDataManager = AppDataManager.getInstance();
       appDataManager.removeUserListener(this.userListener);
     }
-    this.cartViewModel.destroy();
+    // 不销毁 cartViewModel，因为它是父页面传入的
   }
 }

@@ -1,4 +1,4 @@
-import { Order, CartItem, OrderStatus, PaymentStatus } from 'common';
+import { Order, CartItem } from 'common';
 import { OrderRepository } from '../repository/OrderRepository';
 import { OrderDataConverter } from '../util/OrderDataConverter';
 
@@ -41,10 +41,10 @@ export class OrderViewModel {
   async createOrder(
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
-    deliveryAddress?: string,
+    addressBookId: number,
     estimatedDeliveryTime?: number,
     remark?: string,
-    isPaid: boolean = true
+    isPaid: boolean = true,
   ): Promise<OrderOperationResult> {
     try {
       if (!cartItems || cartItems.length === 0) {
@@ -57,19 +57,17 @@ export class OrderViewModel {
       const result = await this.repository.createAndSubmitOrder(
         cartItems,
         orderType,
+        addressBookId,
         estimatedDeliveryTime,
         remark,
-        isPaid
+        isPaid,
       );
-
-      if (result.success && result.data) {
+      if (result.code === 1 && result.data) {
         this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems, isPaid);
         this.notifyListeners();
-        
-        console.log('Order created successfully:', this.currentOrder.orderId, 'Paid:', isPaid);
         return { success: true, order: this.currentOrder };
       } else {
-        this.error = result.error || '订单创建失败';
+        this.error = result.msg || '订单创建失败';
         return { success: false, error: this.error };
       }
     } catch (error) {

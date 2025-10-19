@@ -1,5 +1,3 @@
-import { CartItem } from "common";
-
 export interface NavPath {
   name: string;
   params?: Record<string, Object>;
@@ -15,12 +13,6 @@ export enum PageName {
   DELIVERY = 'delivery',
   CHECKOUT = 'checkout',
   PAYMENT_SUCCESS = 'paymentSuccess'
-}
-
-export interface CheckoutParams {
-  orderId?: string;
-  source?: string;
-  cartItems?: CartItem[];
 }
 
 export interface PaymentSuccessParams {
