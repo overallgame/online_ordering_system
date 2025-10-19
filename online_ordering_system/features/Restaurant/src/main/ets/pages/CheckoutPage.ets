@@ -5,7 +5,7 @@ import { AppDataManager } from 'common';
 import { OrderViewModel } from '../viewModel/OrderViewModel';
 import { CartViewModel } from '../viewModel/CartViewModel';
 import { AddressViewModel } from '../viewModel/AddressViewModel';
-import { AddressBook } from '../model/AddressBook';
+import { AddressBook } from 'common/src/main/ets/model/AddressBook';
 import { PageName, PaymentSuccessParams } from '../util/NavigationTypes';
 import { TimePickerComponent } from '../view/TimePickerComponent';
 import { TimeUtils } from '../util/TimeUtils';
@@ -504,40 +504,43 @@ export struct CheckoutPage {
       return;
     }
     try {
-      // 计算预计送达时间
       const estimatedDeliveryTime = this.isScheduled ? TimeUtils.calculateScheduledDeliveryTimestamp(this.scheduledTime) : undefined;
-      // 创建订单
       const orderResult = await this.orderViewModel.createOrder(
         this.cartItems,
         this.orderType,
         this.currentAddress!!.id,
         estimatedDeliveryTime,
         this.isScheduled ? '预约订单' : '',
-        isPaid,
+        false,
       );
       if (!orderResult.success || !orderResult.order) {
         promptAction.showToast({ message: orderResult.error || '创建订单失败', duration: 2000 });
         return;
       }
-      // 根据支付状态显示不同的成功信息
+
       if (isPaid) {
-        promptAction.showToast({ message: '订单创建成功并已支付！', duration: 2000 });
-        // 清空购物车
-        await this.cartViewModel.clearCart();
-        const paymentParams: PaymentSuccessParams = {
-          orderId: orderResult.order.orderId,
-          totalAmount: orderResult.order.finalAmount
-        };
-        this.showCheckout = false;
-        setTimeout(() => {
-          this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
-        }, 300);
+        const paymentResult = await this.orderViewModel.payOrder(orderResult.order.orderNumber, 0);
+        if (paymentResult.success) {
+          promptAction.showToast({ message: '订单创建成功并已支付！', duration: 2000 });
+          await this.cartViewModel.clearCart();
+          const paymentParams: PaymentSuccessParams = {
+            orderId: orderResult.order.orderId,
+            totalAmount: orderResult.order.finalAmount
+          };
+          this.showCheckout = false;
+          setTimeout(() => {
+            this.restaurantPathStack.pushPathByName(PageName.PAYMENT_SUCCESS, paymentParams);
+          }, 300);
+        } else {
+          promptAction.showToast({ message: paymentResult.error || '支付失败', duration: 2000 });
+          this.showCheckout = false;
+        }
       } else {
         promptAction.showToast({ message: '订单创建成功，请稍后支付！', duration: 2000 });
-        // 清空购物车
         await this.cartViewModel.clearCart();
-        // 关闭结算页
-        this.showCheckout = false;
+        setTimeout(() => {
+          this.showCheckout = false
+        }, 300);
       }
     } catch (error) {
       console.error('Order processing error:', error);
@@ -551,6 +554,5 @@ export struct CheckoutPage {
       const appDataManager = AppDataManager.getInstance();
       appDataManager.removeUserListener(this.userListener);
     }
-    // 不销毁 cartViewModel，因为它是父页面传入的
   }
 }

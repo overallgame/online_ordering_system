@@ -29,3 +29,16 @@ export interface OrderSubmitApiResponse {
   data: OrderSubmitVO;
   msg: string;
 }
+
+// 订单支付请求参数
+export interface OrdersPaymentDTO {
+  orderNumber: string; // 订单号
+  payMethod: number; // 支付方式
+}
+
+// 订单支付响应数据
+export interface PaymentResponse {
+  code: number;
+  data: object;
+  msg: string;
+}
