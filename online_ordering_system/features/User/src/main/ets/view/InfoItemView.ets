@@ -18,7 +18,7 @@ export struct InfoItem {
       // 右侧内容区（根据编辑状态切换）
       if (this.isEditing&&!this.readonly  && this.onChange) {
         TextInput({
-          placeholder: `请输入${this.label}`
+          placeholder: `请输入${this.label}`,text:this.value=="未设置"? "" : this.value
         })
           .onChange(this.onChange)
           .fontSize(16)

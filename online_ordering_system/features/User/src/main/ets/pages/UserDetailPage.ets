@@ -10,6 +10,7 @@ export struct UserDetailPage {
   @State isEditing: boolean = false;
   @State editUser: User = new User();
   @State isAvatarDialogVisible: boolean = false;
+  @State userSex: string = '未知';  // 本地管理性别字段
   // @State showPhoneDialog: boolean = false;
   // @State showEmailDialog: boolean = false;
   // @State showAddressDialog: boolean = false;
@@ -174,6 +175,9 @@ export struct UserDetailPage {
         readonly:false
       })
 
+      // 性别选择
+      this.buildSexSelector()
+
     }
     .width('100%')
     .padding({ left: 20, right: 20, top: 20, bottom: 20 })
@@ -213,6 +217,8 @@ export struct UserDetailPage {
         readonly:false
       })
 
+
+
     }
     .width('100%')
     .padding({ left: 20, right: 20, top: 20, bottom: 20 })
@@ -233,7 +239,7 @@ export struct UserDetailPage {
         .margin({ bottom: 16 })
 
       InfoItem({
-        label: '地址',
+        label: '收获地址',
         value: this.editUser?.address || '未设置',
         onChange: (value: string) => {
           this.editUser.address = value;
@@ -264,6 +270,65 @@ export struct UserDetailPage {
     .margin({ top: 16, left: 16, right: 16, bottom: 20 })
     .borderRadius(12)
     .shadow({ radius: 4, color: '#00000010', offsetX: 0, offsetY: 2 })
+  }
+
+  @Builder
+  buildSexSelector() {
+    Row() {
+      Text('性别')
+        .fontSize(14)
+        .fontColor('#666666')
+        .width(80)
+        .textAlign(TextAlign.Start)
+      
+      if (this.isEditing) {
+        Row() {
+          Button('男')
+            .fontSize(14)
+            .fontColor(this.editUser.sex === '男' ? '#FFFFFF' : '#007AFF')
+            .backgroundColor(this.editUser.sex === '男' ? '#007AFF' : '#F0F0F0')
+            .borderRadius(16)
+            .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+            .onClick(() => {
+              this.editUser.sex = '男';
+            })
+          
+          Button('女')
+            .fontSize(14)
+            .fontColor(this.editUser.sex === '女' ? '#FFFFFF' : '#007AFF')
+            .backgroundColor(this.editUser.sex === '女' ? '#007AFF' : '#F0F0F0')
+            .borderRadius(16)
+            .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+            .margin({ left: 12 })
+            .onClick(() => {
+              this.editUser.sex = '女';
+            })
+          
+          Button('未知')
+            .fontSize(14)
+            .fontColor(this.editUser.sex === '未知' ? '#FFFFFF' : '#007AFF')
+            .backgroundColor(this.editUser.sex === '未知' ? '#007AFF' : '#F0F0F0')
+            .borderRadius(16)
+            .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+            .margin({ left: 12 })
+            .onClick(() => {
+              this.editUser.sex = '未知';
+            })
+        }
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.End)
+      } else {
+        Text(this.editUser.sex? this.editUser.sex:"未设置")
+          .fontSize(16)
+          .fontColor('#000000')
+          .layoutWeight(1)
+          .textAlign(TextAlign.End)
+      }
+    }
+    .width('100%')
+    .height(50)
+    .alignItems(VerticalAlign.Center)
+    .margin({ bottom: 16 })
   }
 
   @Builder

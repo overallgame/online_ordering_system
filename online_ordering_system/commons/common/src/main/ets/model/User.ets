@@ -6,6 +6,7 @@ export class User {
   avatar?: string;
   address?: string;
   createTime: number = 0;
+  sex?:string;
 
   // 用户偏好设置
   preferences: UserPreferences = new UserPreferences();

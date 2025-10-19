@@ -129,6 +129,7 @@ export class ApiEndpoints {
   static readonly REGISTER = '/user/user/register';
   static readonly LOGOUT = '/api/v1/auth/logout';
   static readonly USER_PROFILE = '/api/v1/user/profile';
+  static readonly USER_UPDATE_PROFILE = '/user/user/profile';  // 更新用户信息
 
   // 分类相关接口
   static readonly CATEGORY_LIST = '/user/category/list';

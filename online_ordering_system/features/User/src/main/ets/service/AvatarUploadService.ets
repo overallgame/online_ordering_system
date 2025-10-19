@@ -75,18 +75,4 @@ export class AvatarUploadService {
     }
   }
 
-  /**
-   * 上传图片到服务器
-   */
-  async uploadToServer(imageUri: string): Promise<string> {
-    try {
-      // 这里可以添加上传到服务器的逻辑
-      // 目前直接返回本地URI
-      console.log('上传到服务器功能待实现');
-      return imageUri;
-    } catch (error) {
-      console.error('上传失败:', error);
-      throw new Error('上传失败');
-    }
-  }
 }

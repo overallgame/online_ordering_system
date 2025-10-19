@@ -1,4 +1,5 @@
-import { User, AppDataManager ,UserPreferences} from 'common';
+import { User, AppDataManager, UserPreferences,  } from 'common';
+import { UserProfileService } from '../service/UserProfileService';
 
 /**
  * 用户ViewModel - 处理用户相关的业务逻辑
@@ -10,6 +11,8 @@ export class UserViewModel {
   // 同步状态
   isSyncing: boolean = false;
   lastSyncTime: number = 0;
+  // 用户资料服务
+  private userProfileService: UserProfileService = UserProfileService.getInstance();
 
   constructor() {
     this.loadUserInfo();
@@ -30,7 +33,6 @@ export class UserViewModel {
         console.error(this.user.avatar+"ttt");
       } else {
         // 只有在没有用户数据时才创建默认用户
-        console.error("lllllllllllllkkk");
         this.user = new User();
         this.user.userId = "U123456789"; // 必填，唯一用户ID
         this.user.username = "未设置";     // 必填，用户昵称
@@ -94,13 +96,29 @@ export class UserViewModel {
     }
 
     try {
-      // 先更新本地
-      this.user = user;
-      await AppDataManager.getInstance().setCurrentUser(this.user);
+      // 设置同步状态
+      this.isSyncing = true;
+
+
+      // 调用后端API更新用户信息
+      const response = await this.userProfileService.updateUserProfile(user);
       
-      return true;
+      if (response.success) {
+        // 后端更新成功，更新本地数据
+        this.user = user;
+        await AppDataManager.getInstance().setCurrentUser(this.user);
+        this.lastSyncTime = Date.now();
+        console.log('用户资料更新成功');
+        this.isSyncing = false;
+        return true;
+      } else {
+        console.error('后端更新用户资料失败:', response.error);
+        this.isSyncing = false;
+        return false;
+      }
     } catch (error) {
       console.error('更新用户资料失败:', error);
+      this.isSyncing = false;
       return false;
     }
   }
@@ -160,6 +178,7 @@ export class UserViewModel {
     newUser.email = user.email || '';
     newUser.avatar = user.avatar || '';
     newUser.address = user.address || '';
+    newUser.sex=user.sex;
     newUser.createTime = user.createTime || 0;
     newUser.isLoggedIn = user.isLoggedIn || false;
     newUser.token = user.token;

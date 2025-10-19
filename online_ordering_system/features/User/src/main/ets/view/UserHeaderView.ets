@@ -1,5 +1,4 @@
 import { UserViewModel } from '../viewmodel/UserViewModel';
-import { AvatarSelectDialog } from '../components/AvatarSelectDialog';
 
 /**
  * 用户信息头部View组件
