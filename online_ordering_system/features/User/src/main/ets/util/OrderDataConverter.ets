@@ -159,7 +159,7 @@ export class OrderDataConverter {
     const order = new Order();
     
     // 基础信息
-    order.orderId = apiOrder.id.toString();
+    order.orderId = apiOrder.number;
     order.userId = apiOrder.userId.toString();
     order.restaurantId = '1'; // 默认餐厅ID，实际应该从接口获取
     
