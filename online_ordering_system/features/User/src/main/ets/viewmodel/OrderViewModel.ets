@@ -22,7 +22,7 @@ export class OrderViewModel implements OrderStatusListener {
   pageSize: number = 10;
   
   // 筛选条件
-  selectedStatus?: number; // 订单状态筛选
+  //selectedStatus?: number; // 订单状态筛选
   beginTime?: string; // 开始时间
   endTime?: string; // 结束时间
   
@@ -51,23 +51,23 @@ export class OrderViewModel implements OrderStatusListener {
 
   }
 
-  /**
-   * 设置筛选条件
-   */
-  setFilter(status?: number, beginTime?: string, endTime?: string): void {
-    this.selectedStatus = status;
-    this.beginTime = beginTime;
-    this.endTime = endTime;
-  }
-
-  /**
-   * 清除筛选条件
-   */
-  clearFilter(): void {
-    this.selectedStatus = undefined;
-    this.beginTime = undefined;
-    this.endTime = undefined;
-  }
+  // /**
+  //  * 设置筛选条件
+  //  */
+  // setFilter(status?: number, beginTime?: string, endTime?: string): void {
+  //   this.selectedStatus = status;
+  //   this.beginTime = beginTime;
+  //   this.endTime = endTime;
+  // }
+  //
+  // /**
+  //  * 清除筛选条件
+  //  */
+  // clearFilter(): void {
+  //   this.selectedStatus = undefined;
+  //   this.beginTime = undefined;
+  //   this.endTime = undefined;
+  // }
 
   /**
    * 加载订单列表
@@ -86,8 +86,7 @@ export class OrderViewModel implements OrderStatusListener {
       // 使用历史订单接口获取用户订单
       const response = await this.orderService.getHistoryOrders(
         this.currentPage, 
-        this.pageSize, 
-        this.selectedStatus
+        this.pageSize,
       );
 
       if (response.success && response.data) {
@@ -178,13 +177,13 @@ export class OrderViewModel implements OrderStatusListener {
   /**
    * 支付订单
    */
-  async payOrder(orderNumber: string, payMethod: number,order:Order): Promise<PaymentResult> {
+  async payOrder( payMethod: number,order:Order): Promise<PaymentResult> {
     try {
-      const response = await this.orderService.payOrder(orderNumber, payMethod,order);
+      const response = await this.orderService.payOrder(payMethod,order);
       
       if (response.success) {
         // 更新本地订单状态
-        const orderIndex = this.orders.findIndex(order => order.orderId === orderNumber);
+        const orderIndex = this.orders.findIndex(order1 => order1.orderId === order.orderId);
         if (orderIndex !== -1) {
           this.orders[orderIndex].paymentStatus = PaymentStatus.PAID;
           this.orders[orderIndex].status = OrderStatus.CONFIRMED;
@@ -245,7 +244,7 @@ export class OrderViewModel implements OrderStatusListener {
    * 设置状态筛选
    */
   setStatusFilter(status?: number): void {
-    this.selectedStatus = status;
+    //this.selectedStatus = status;
     this.currentPage = 1;
     this.orders = [];
     this.hasMore = true;
@@ -335,7 +334,7 @@ export class OrderViewModel implements OrderStatusListener {
     if (orderIndex !== -1) {
       this.orders[orderIndex].status = newStatus;
       this.orders[orderIndex].updateTime = Date.now();
-      
+      console.error(this.orders[orderIndex].status+"订单");
       // 触发UI更新
       this.orders = [...this.orders];
       

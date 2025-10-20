@@ -58,8 +58,8 @@ export class MockOrderDataTest {
     const statuses = [
       OrderStatus.PENDING,
       OrderStatus.CONFIRMED,
-      OrderStatus.PREPARING,
-      OrderStatus.READY,
+      OrderStatus.ACCEPTED,
+      OrderStatus.DELIVERING,
       OrderStatus.COMPLETED,
       OrderStatus.CANCELLED
     ];

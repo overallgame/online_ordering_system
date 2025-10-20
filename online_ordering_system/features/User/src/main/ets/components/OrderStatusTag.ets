@@ -23,9 +23,9 @@ export struct OrderStatusTag {
   private getStatusText(): string {
     const statusMap: Record<OrderStatus, string> = {
       [OrderStatus.PENDING]: '待付款',
-      [OrderStatus.CONFIRMED]: '已付款',
-      [OrderStatus.PREPARING]: '制作中',
-      [OrderStatus.READY]: '待取餐',
+      [OrderStatus.CONFIRMED]: '待接单',
+      [OrderStatus.ACCEPTED]: '已接单',
+      [OrderStatus.DELIVERING]: '派送中',
       [OrderStatus.COMPLETED]: '已完成',
       [OrderStatus.CANCELLED]: '已取消'
     };
@@ -36,8 +36,8 @@ export struct OrderStatusTag {
     const bgColorMap: Record<OrderStatus, string> = {
       [OrderStatus.PENDING]: '#FFF3E0',
       [OrderStatus.CONFIRMED]: '#E8F5E8',
-      [OrderStatus.PREPARING]: '#FFF8E1',
-      [OrderStatus.READY]: '#E3F2FD',
+      [OrderStatus.ACCEPTED]: '#FFF8E1',
+      [OrderStatus.DELIVERING]: '#E3F2FD',
       [OrderStatus.COMPLETED]: '#F5F5F5',
       [OrderStatus.CANCELLED]: '#FFEBEE'
     };

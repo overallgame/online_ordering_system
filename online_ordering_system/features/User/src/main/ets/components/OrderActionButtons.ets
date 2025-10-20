@@ -16,7 +16,7 @@ export struct OrderActionButtons {
   build() {
     Row() {
       // 根据模式显示不同的按钮
-      if (this.shouldShowCancelButton()) {
+      if (this.canCancelOrder()) {
         Button('取消订单')
           .fontSize(14)
           .fontColor('#666666')
@@ -32,7 +32,7 @@ export struct OrderActionButtons {
           })
       }
 
-      if (this.shouldShowDeleteButton()) {
+      if (this.canDeleteOrder()) {
         Button('删除订单')
           .fontSize(14)
           .fontColor('#666666')
@@ -48,7 +48,7 @@ export struct OrderActionButtons {
           })
       }
 
-      if (this.shouldShowPayButton()) {
+      if (this.canPayOrder()) {
         Button('立即支付')
           .fontSize(14)
           .fontColor('#FFFFFF')
@@ -64,7 +64,7 @@ export struct OrderActionButtons {
           })
       }
 
-      if (this.shouldShowRemindButton()) {
+      if (this.canRemindOrder()) {
         Button('催单')
           .fontSize(14)
           .fontColor('#FF9800')
@@ -80,7 +80,7 @@ export struct OrderActionButtons {
           })
       }
 
-      if (this.shouldShowRepeatButton()) {
+      if (this.canRepeatOrder()) {
         Button('再来一单')
           .fontSize(14)
           .fontColor('#2196F3')
@@ -116,8 +116,8 @@ export struct OrderActionButtons {
   private canRemindOrder(): boolean {
     // 已付款、制作中、待取餐状态可以催单
     return this.order.status === OrderStatus.CONFIRMED || 
-           this.order.status === OrderStatus.PREPARING || 
-           this.order.status === OrderStatus.READY;
+           this.order.status === OrderStatus.ACCEPTED ||
+           this.order.status === OrderStatus.DELIVERING;
   }
 
   private canRepeatOrder(): boolean {

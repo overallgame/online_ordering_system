@@ -44,8 +44,8 @@ export class SelectedCustomization {
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  PREPARING = 'preparing',
-  READY = 'ready',
+  ACCEPTED = 'accepted',
+  DELIVERING = 'delivering',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled'
 }

@@ -74,14 +74,14 @@ export struct PendingDeliveryPage {
     } else {
       List() {
         ForEach(this.orderViewModel.orders, (order: Order) => {
-          if(order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PREPARING || order.status === OrderStatus.READY)
+          if(order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.ACCEPTED || order.status === OrderStatus.DELIVERING)
           {
             ListItem() {
               OrderItemComponent({
                 order: order,
                 mode: 'delivery',
                 onRemind: () => {
-                  this.showRemindOrderDialog(order);
+                  this.handleRemindOrder(order);
                 }
               })
             }
@@ -144,8 +144,8 @@ export struct PendingDeliveryPage {
   getPendingDeliveryOrders(): Order[] {
     return this.orderViewModel.orders.filter(order => 
       order.status === OrderStatus.CONFIRMED || 
-      order.status === OrderStatus.PREPARING || 
-      order.status === OrderStatus.READY
+      order.status === OrderStatus.ACCEPTED ||
+      order.status === OrderStatus.DELIVERING
     );
   }
 
@@ -154,23 +154,17 @@ export struct PendingDeliveryPage {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  showRemindOrderDialog(order: Order) {
+  async  handleRemindOrder(order: Order) {
     this.selectedOrder = order;
     this.showRemindDialog = true;
-  }
-
-  async handleRemindOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.remindOrder(this.selectedOrder.orderId);
-    this.showRemindDialog = false;
-    
+    const success=await this.orderViewModel.remindOrder(order.orderId);
     if (success) {
       this.showToast('催单成功，商家会尽快处理');
     } else {
       this.showToast('催单失败，请重试');
     }
   }
+
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);

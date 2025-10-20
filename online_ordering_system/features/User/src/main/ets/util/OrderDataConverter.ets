@@ -87,9 +87,9 @@ export class OrderDataConverter {
   static convertOrderStatus(apiStatus: number): OrderStatus {
     const statusMap: Record<number, OrderStatus> = {
       1: OrderStatus.PENDING,      // 待付款
-      2: OrderStatus.CONFIRMED,    // 已付款
-      3: OrderStatus.PREPARING,    // 制作中
-      4: OrderStatus.READY,        // 待取餐
+      2: OrderStatus.CONFIRMED,    // 待接单
+      3: OrderStatus.ACCEPTED,     // 已接单
+      4: OrderStatus.DELIVERING,   // 待取餐
       5: OrderStatus.COMPLETED,    // 已完成
       6: OrderStatus.CANCELLED     // 已取消
     };
@@ -226,9 +226,9 @@ export class OrderDataConverter {
   static getStatusText(status: OrderStatus): string {
     const statusMap: Record<OrderStatus, string> = {
       [OrderStatus.PENDING]: '待付款',
-      [OrderStatus.CONFIRMED]: '已付款',
-      [OrderStatus.PREPARING]: '制作中',
-      [OrderStatus.READY]: '待取餐',
+      [OrderStatus.CONFIRMED]: '待接单',
+      [OrderStatus.ACCEPTED]: '已接单',
+      [OrderStatus.DELIVERING]: '派送中',
       [OrderStatus.COMPLETED]: '已完成',
       [OrderStatus.CANCELLED]: '已取消'
     };
@@ -242,8 +242,8 @@ export class OrderDataConverter {
     const colorMap: Record<OrderStatus, string> = {
       [OrderStatus.PENDING]: '#FF6B35',
       [OrderStatus.CONFIRMED]: '#4CAF50',
-      [OrderStatus.PREPARING]: '#FF9800',
-      [OrderStatus.READY]: '#2196F3',
+      [OrderStatus.ACCEPTED]: '#FF9800',
+      [OrderStatus.DELIVERING]: '#2196F3',
       [OrderStatus.COMPLETED]: '#9E9E9E',
       [OrderStatus.CANCELLED]: '#F44336'
     };

@@ -76,14 +76,11 @@ export class OrderService {
   async getHistoryOrders(
     page: number = 1, 
     pageSize: number = 10,
-    status?: number
   ): Promise<ApiResponse<OrderListResponse>> {
     //return this.getMockOrderData(page, pageSize, status);
     try {
       let endpoint = `${ApiEndpoints.HISTORY_ORDERS}?pageNum=${page}&pageSize=${pageSize}`;
-      if (status !== undefined) {
-        endpoint += `&status=${status}`;
-      }
+
 
       // 根据接口文档，历史订单接口返回的数据结构包含code、msg、data字段
       const response = await this.apiClient.get<HistoryOrderResponse>(endpoint);
@@ -124,7 +121,7 @@ export class OrderService {
 
       // 当网络请求失败时，返回模拟数据用于测试
       console.log('网络请求失败，返回模拟订单数据用于测试');
-      return this.getMockOrderData(page, pageSize, status);
+      return this.getMockOrderData(page, pageSize);
     }
   }
 
@@ -263,7 +260,7 @@ export class OrderService {
    * @param payMethod 支付方式
    * @returns 支付结果
    */
-  async payOrder(orderNumber: string, payMethod: number,order:Order): Promise<ApiResponse<PaymentResult>> {
+  async payOrder(payMethod: number,order:Order): Promise<ApiResponse<PaymentResult>> {
     try {
       const payOrderData: PayOrderRequest = {
         orderNumber:order.orderId,

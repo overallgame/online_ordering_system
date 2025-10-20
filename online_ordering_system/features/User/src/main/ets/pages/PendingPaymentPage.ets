@@ -10,8 +10,9 @@ import { ToastComponent } from '../components/ToastComponent';
 export struct PendingPaymentPage {
   @Link orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  @State showPayDialog: boolean = false;
-  @State selectedOrder: Order | null = null;
+  // @State showPayDialog: boolean = false;
+  // @State showCancelDialog: boolean = false;
+  // @State selectedOrder: Order | null = null;
 
   aboutToAppear() {
     this.loadPendingPaymentOrders();
@@ -80,7 +81,10 @@ export struct PendingPaymentPage {
                 order: order,
                 mode: 'payment',
                 onPay: () => {
-                  this.showPayOrderDialog(order);
+                  this.handlePayOrder(order);
+                },
+                onCancel:()=>{
+                  this.handleCancelOrder(order)
                 }
               })
             }
@@ -145,9 +149,32 @@ export struct PendingPaymentPage {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  showPayOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showPayDialog = true;
+  async handlePayOrder(order: Order) {
+    const response= await this.orderViewModel.payOrder(1,order);
+    if(response.success)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("支付成功");
+    }
+    else
+    {
+      this.showToast("支付失败");
+    }
+
+
+  }
+
+  async handleCancelOrder(order: Order) {
+    const response= await this.orderViewModel.cancelOrder(order.orderId);
+    if(response)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("取消成功");
+    }
+    else
+    {
+      this.showToast("取消失败");
+    }
   }
 
   getPendingPaymentOrders(): Order[] {
@@ -156,20 +183,6 @@ export struct PendingPaymentPage {
     );
   }
 
-  // async handlePayOrder() {
-  //   if (!this.selectedOrder) return;
-  //
-  //   const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
-  //   this.showPayDialog = false;
-  //
-  //   if (result.success) {
-  //     this.showToast('支付成功');
-  //     // 刷新订单列表
-  //     await this.refreshOrders();
-  //   } else {
-  //     this.showToast('支付失败，请重试');
-  //   }
-  // }
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);
