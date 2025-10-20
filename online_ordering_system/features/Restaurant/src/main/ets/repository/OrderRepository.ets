@@ -62,8 +62,7 @@ export class OrderRepository {
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
     addressBookId: number,
-    estimatedDeliveryTime?: number,
-    remark?: string,
+    estimatedDeliveryTime: number,
   ): Promise<OrderApiResponse> {
     try {
       // 创建订单提交参数
@@ -72,7 +71,6 @@ export class OrderRepository {
         orderType,
         addressBookId,
         estimatedDeliveryTime,
-        remark,
       );
 
       // 提交订单

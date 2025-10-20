@@ -512,7 +512,7 @@ export struct DeliveryPage {
               }
               .width(24)
               .height(24)
-              .backgroundColor(this.isCartLoading ? '#CCCCCC' : '#4CAF50')
+              .backgroundColor('#4CAF50')
               .borderRadius(12)
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
@@ -533,7 +533,7 @@ export struct DeliveryPage {
               }
               .width(24)
               .height(24)
-              .backgroundColor(this.isCartLoading ? '#CCCCCC' : '#4CAF50')
+              .backgroundColor('#4CAF50')
               .borderRadius(12)
               .justifyContent(FlexAlign.Center)
               .alignItems(VerticalAlign.Center)
@@ -550,7 +550,7 @@ export struct DeliveryPage {
             }
             .width(24)
             .height(24)
-            .backgroundColor(this.isCartLoading ? '#CCCCCC' : '#4CAF50')
+            .backgroundColor('#4CAF50')
             .borderRadius(12)
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)

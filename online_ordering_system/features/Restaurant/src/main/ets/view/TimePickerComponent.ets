@@ -5,8 +5,9 @@ import { TimeUtils } from '../util/TimeUtils';
 @Component
 export struct TimePickerComponent {
   @Link showTimePicker: boolean;
-  @Prop cartItems: CartItem[] = [];
   @Link scheduledTime: string;
+  @Link isScheduled: boolean;
+  @Prop cartItems: CartItem[] = [];
   @State selectedTimeSlot: string = '';
   @State isTimeSlotSelected: boolean = false;
 
@@ -41,7 +42,7 @@ export struct TimePickerComponent {
     const minute = parseInt(timeParts[1]);
     
     // 格式化时间字符串
-    const timeString = `预约送 ${TimeUtils.formatTimeDisplay(hour, minute)}送达`;
+    const timeString = `预约${TimeUtils.formatTimeDisplay(hour, minute)}送达`;
 
     // 设置选择的时间并关闭时间选择器
     this.scheduledTime = timeString;
@@ -82,6 +83,8 @@ export struct TimePickerComponent {
         .backgroundColor('rgba(0, 0, 0, 0.5)')
         .onClick(() => {
           this.resetSelection();
+          this.scheduledTime = '预约送 选择时间 >';
+          this.isScheduled = false;
           this.showTimePicker = false;
         })
 
@@ -114,7 +117,7 @@ export struct TimePickerComponent {
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
-        .padding({ bottom: 16 })
+        .padding({ bottom: 8 })
 
         Grid() {
           ForEach(this.generateTimeSlots(), (timeSlot: string) => {
@@ -144,7 +147,8 @@ export struct TimePickerComponent {
         .columnsTemplate('1fr 1fr 1fr')
         .rowsGap(12)
         .columnsGap(12)
-        .padding({ left: 16, right: 16, bottom: 20 })
+        .padding({ left: 16, right: 16 })
+        .layoutWeight(1)
 
         Row() {
           Row() {
@@ -176,6 +180,7 @@ export struct TimePickerComponent {
           .justifyContent(FlexAlign.Center)
           .onClick(() => {
             this.confirmTimeSelection();
+            this.isScheduled = true;
           })
         }
         .width('100%')
@@ -183,10 +188,11 @@ export struct TimePickerComponent {
         .padding({ left: 16, right: 16, bottom: 16 })
       }
       .width('100%')
+      .height('60%')
       .backgroundColor('#1A1A1A')
       .borderRadius({ topLeft: 16, topRight: 16 })
       .position({ x: 0, y: '100%' })
-      .translate({ y: '-60%' })
+      .translate({ y: '-100%' })
       .transition(TransitionEffect.translate({ y: 0 }).animation({ duration: 300, curve: Curve.EaseOut }))
     }
     .width('100%')
