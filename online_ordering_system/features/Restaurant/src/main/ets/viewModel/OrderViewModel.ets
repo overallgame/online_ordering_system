@@ -42,9 +42,7 @@ export class OrderViewModel {
     cartItems: CartItem[],
     orderType: 'dine_in' | 'delivery',
     addressBookId: number,
-    estimatedDeliveryTime?: number,
-    remark?: string,
-    isPaid: boolean = true,
+    estimatedDeliveryTime: number,
   ): Promise<OrderOperationResult> {
     try {
       if (!cartItems || cartItems.length === 0) {
@@ -59,10 +57,10 @@ export class OrderViewModel {
         orderType,
         addressBookId,
         estimatedDeliveryTime,
-        remark,
       );
+
       if (result.code === 1 && result.data) {
-        this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems, isPaid);
+        this.currentOrder = OrderDataConverter.convertOrderSubmitToOrder(result.data, cartItems);
         this.notifyListeners();
         return { success: true, order: this.currentOrder };
       } else {

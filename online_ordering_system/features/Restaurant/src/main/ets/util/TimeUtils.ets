@@ -109,7 +109,7 @@ export class TimeUtils {
     // 如果是时间格式，转换为预约格式
     const timeMatch = timeString.match(/(\d{2}):(\d{2})/);
     if (timeMatch) {
-      return `预约送 ${timeMatch[0]}送达`;
+      return `预约${timeMatch[0]}送达`;
     }
     
     return timeString;
