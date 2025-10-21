@@ -37,7 +37,7 @@ export struct OrderItemComponent {
       Column() {
         // 订单基本信息
         Row() {
-          Text(`就餐方式: ${this.getOrderTypeText()}`)
+          Text(`${this.getOrderTypeText()}`)
             .fontSize(12)
             .fontColor('#666666')
             .layoutWeight(1)

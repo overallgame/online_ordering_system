@@ -15,8 +15,8 @@ export class MockOrderDataGenerator {
     // 生成不同状态的订单
     orders.push(MockOrderDataGenerator.createMockOrder('ORDER001', OrderStatus.PENDING, PaymentStatus.PENDING, '宫保鸡丁', 25.00, '2024-01-15 10:30:00'));
     orders.push(MockOrderDataGenerator.createMockOrder('ORDER002', OrderStatus.CONFIRMED, PaymentStatus.PAID, '麻婆豆腐', 18.00, '2024-01-14 19:20:00'));
-    orders.push(MockOrderDataGenerator.createMockOrder('ORDER003', OrderStatus.PREPARING, PaymentStatus.PAID, '红烧肉', 35.00, '2024-01-14 18:45:00'));
-    orders.push(MockOrderDataGenerator.createMockOrder('ORDER004', OrderStatus.READY, PaymentStatus.PAID, '糖醋里脊', 28.00, '2024-01-14 17:30:00'));
+    orders.push(MockOrderDataGenerator.createMockOrder('ORDER003', OrderStatus.DELIVERING, PaymentStatus.PAID, '红烧肉', 35.00, '2024-01-14 18:45:00'));
+    orders.push(MockOrderDataGenerator.createMockOrder('ORDER004', OrderStatus.ACCEPTED, PaymentStatus.PAID, '糖醋里脊', 28.00, '2024-01-14 17:30:00'));
     orders.push(MockOrderDataGenerator.createMockOrder('ORDER005', OrderStatus.COMPLETED, PaymentStatus.PAID, '鱼香肉丝', 22.00, '2024-01-13 20:15:00'));
     orders.push(MockOrderDataGenerator.createMockOrder('ORDER006', OrderStatus.CANCELLED, PaymentStatus.PENDING, '回锅肉', 30.00, '2024-01-13 16:20:00'));
     
@@ -24,17 +24,17 @@ export class MockOrderDataGenerator {
     orders.push(MockOrderDataGenerator.createMockComboOrder('ORDER007', OrderStatus.COMPLETED, PaymentStatus.PAID, '经典双人套餐', 88.00, '2024-01-12 19:00:00'));
     
     // 生成多菜品订单
-    orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER008', OrderStatus.PREPARING, PaymentStatus.PAID, '2024-01-12 18:30:00'));
+    orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER008', OrderStatus.DELIVERING, PaymentStatus.PAID, '2024-01-12 18:30:00'));
     
     // 生成外卖订单
-    orders.push(MockOrderDataGenerator.createMockDeliveryOrder('ORDER009', OrderStatus.READY, PaymentStatus.PAID, '水煮鱼', 45.00, '2024-01-11 21:00:00'));
+    orders.push(MockOrderDataGenerator.createMockDeliveryOrder('ORDER009', OrderStatus.DELIVERING, PaymentStatus.PAID, '水煮鱼', 45.00, '2024-01-11 21:00:00'));
     
     // 生成更多多菜品订单
     orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER010', OrderStatus.COMPLETED, PaymentStatus.PAID, '2024-01-10 19:30:00'));
     orders.push(MockOrderDataGenerator.createMockMultiDishOrder('ORDER011', OrderStatus.CONFIRMED, PaymentStatus.PAID, '2024-01-09 18:15:00'));
     
     // 生成大型多菜品订单
-    orders.push(MockOrderDataGenerator.createMockLargeOrder('ORDER012', OrderStatus.PREPARING, PaymentStatus.PAID, '2024-01-08 20:00:00'));
+    orders.push(MockOrderDataGenerator.createMockLargeOrder('ORDER012', OrderStatus.DELIVERING, PaymentStatus.PAID, '2024-01-08 20:00:00'));
     
     return orders;
   }

@@ -9,86 +9,168 @@ export struct OrderStatusView {
   @Consume('navStack') navStack: NavPathStack;
 
   build() {
-    Row() {
-      // 待付款
-      Column() {
-        Image($r('app.media.pending_payment'))
-          .width(40)
-          .height(40)
-        Text('待付款')
-          .fontSize(14)
-          .fontColor('#000000')
-          .margin({ top: 8 })
-      }
-      .layoutWeight(1)
-      .onClick(() => {
-        if (this.navStack) {
-          this.navStack.pushPath({ name: 'PendingPaymentPage' });
-        } else {
-          console.error("navStack is not initialized");
+    Column() {
+      Row() {
+        // 待付款
+        Column() {
+          Stack() {
+            Circle()
+              .width(50)
+              .height(50)
+              .fill('#FF6B6B')
+              .opacity(0.1)
+            
+            Image($r('app.media.pending_payment'))
+              .width(30)
+              .height(30)
+              .fillColor('#FF6B6B')
+          }
+          .alignContent(Alignment.Center)
+          .margin({ bottom: 8 })
+          
+          Text('待付款')
+            .fontSize(14)
+            .fontColor('#333333')
+            .fontWeight(FontWeight.Medium)
         }
-
-
-      })
-      
-      // 我的订单
-      Column() {
-        Image($r('app.media.my_order'))
-          .width(40)
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Center)
+        .padding({ top: 16, bottom: 16 })
+        .onClick(() => {
+          if (this.navStack) {
+            this.navStack.pop();
+            this.navStack.pushPath({ name: 'PendingPaymentPage' });
+          } else {
+            console.error("navStack is not initialized");
+          }
+        })
+        
+        // 分隔线
+        Divider()
+          .vertical(true)
           .height(40)
-        Text('我的订单')
-          .fontSize(14)
-          .fontColor('#000000')
-          .margin({ top: 8 })
-      }
-      .layoutWeight(1)
-      .onClick(() => {
-        if (this.navStack) {
-          this.navStack.pushPath({ name: 'MyOrdersPage' });
-        } else {
-          console.error("navStack is not initialized");
+          .color('#E5E5E5')
+          .strokeWidth(1)
+        
+        // 我的订单
+        Column() {
+          Stack() {
+            Circle()
+              .width(50)
+              .height(50)
+              .fill('#4ECDC4')
+              .opacity(0.1)
+            
+            Image($r('app.media.my_order'))
+              .width(30)
+              .height(30)
+              .fillColor('#4ECDC4')
+          }
+          .alignContent(Alignment.Center)
+          .margin({ bottom: 8 })
+          
+          Text('我的订单')
+            .fontSize(14)
+            .fontColor('#333333')
+            .fontWeight(FontWeight.Medium)
         }
-      })
-      
-      // 待收货
-      Column() {
-        Image($r('app.media.pending_delivery'))
-          .width(40)
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Center)
+        .padding({ top: 16, bottom: 16 })
+        .onClick(() => {
+          if (this.navStack) {
+            this.navStack.pop();
+            this.navStack.pushPath({ name: 'MyOrdersPage' });
+          } else {
+            console.error("navStack is not initialized");
+          }
+        })
+        
+        // 分隔线
+        Divider()
+          .vertical(true)
           .height(40)
-        Text('待收货')
-          .fontSize(14)
-          .fontColor('#000000')
-          .margin({ top: 8 })
-      }
-      .layoutWeight(1)
-      .onClick(() => {
-        if (this.navStack) {
-          this.navStack.pushPath({ name: 'PendingDeliveryPage' });
-        } else {
-          console.error("navStack is not initialized");
+          .color('#E5E5E5')
+          .strokeWidth(1)
+        
+        // 待收货
+        Column() {
+          Stack() {
+            Circle()
+              .width(50)
+              .height(50)
+              .fill('#45B7D1')
+              .opacity(0.1)
+            
+            Image($r('app.media.pending_delivery'))
+              .width(30)
+              .height(30)
+              .fillColor('#45B7D1')
+          }
+          .alignContent(Alignment.Center)
+          .margin({ bottom: 8 })
+          
+          Text('待收货')
+            .fontSize(14)
+            .fontColor('#333333')
+            .fontWeight(FontWeight.Medium)
         }
-
-      })
-      
-      // 待评价
-      Column() {
-        Image($r('app.media.pending_review'))
-          .width(40)
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Center)
+        .padding({ top: 16, bottom: 16 })
+        .onClick(() => {
+          if (this.navStack) {
+            this.navStack.pop();
+            this.navStack.pushPath({ name: 'PendingDeliveryPage' });
+          } else {
+            console.error("navStack is not initialized");
+          }
+        })
+        
+        // 分隔线
+        Divider()
+          .vertical(true)
           .height(40)
-        Text('待评价')
-          .fontSize(14)
-          .fontColor('#000000')
-          .margin({ top: 8 })
+          .color('#E5E5E5')
+          .strokeWidth(1)
+        
+        // 待评价
+        Column() {
+          Stack() {
+            Circle()
+              .width(50)
+              .height(50)
+              .fill('#96CEB4')
+              .opacity(0.1)
+            
+            Image($r('app.media.pending_review'))
+              .width(30)
+              .height(30)
+              .fillColor('#96CEB4')
+          }
+          .alignContent(Alignment.Center)
+          .margin({ bottom: 8 })
+          
+          Text('待评价')
+            .fontSize(14)
+            .fontColor('#333333')
+            .fontWeight(FontWeight.Medium)
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Center)
+        .padding({ top: 16, bottom: 16 })
+        .onClick(() => {
+          // 待评价功能暂未实现
+        })
       }
-      .layoutWeight(1)
-      .onClick(() => {
-
-      })
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceEvenly)
     }
     .width('100%')
-    .height(80)
     .backgroundColor('#FFFFFF')
-    .padding({ top: 16, bottom: 16 })
-    .justifyContent(FlexAlign.SpaceEvenly)
+    .borderRadius(12)
+    .margin({ left: 16, right: 16, top: 16 })
+    .shadow({ radius: 8, color: '#00000010', offsetX: 0, offsetY: 2 })
+    .padding({ left: 8, right: 8 })
   }
 }

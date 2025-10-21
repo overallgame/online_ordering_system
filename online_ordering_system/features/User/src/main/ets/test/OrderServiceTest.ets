@@ -86,7 +86,7 @@ export class OrderServiceTest {
       const response = await orderService.getHistoryOrders(
         1,     // 页码
         5,    // 每页数量
-        1 // 状态筛选
+
       );
       
       if (response.success) {

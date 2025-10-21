@@ -76,56 +76,53 @@ export class OrderService {
   async getHistoryOrders(
     page: number = 1, 
     pageSize: number = 10,
-    status?: number
   ): Promise<ApiResponse<OrderListResponse>> {
-    return this.getMockOrderData(page, pageSize, status);
-    // try {
-    //   let endpoint = `${ApiEndpoints.HISTORY_ORDERS}?pageNum=${page}&pageSize=${pageSize}`;
-    //   if (status !== undefined) {
-    //     endpoint += `&status=${status}`;
-    //   }
-    //
-    //   // 根据接口文档，历史订单接口返回的数据结构包含code、msg、data字段
-    //   const response = await this.apiClient.get<HistoryOrderResponse>(endpoint);
-    //
-    //   if (response.success && response.data) {
-    //     // 检查接口返回的code字段
-    //     if (response.data.code === 1 && response.data.data) {
-    //       // 转换接口数据为应用数据
-    //       const orders = OrderDataConverter.convertHistoryOrderList(response.data.data);
-    //       const convertedResponse: OrderListResponse = {
-    //         orders: orders,
-    //         total: response.data.data.total,
-    //         page: page,
-    //         pageSize: pageSize
-    //       };
-    //
-    //       console.log('获取历史订单列表成功');
-    //       return {
-    //         success: true,
-    //         data: convertedResponse
-    //       };
-    //     } else {
-    //       console.error('获取历史订单列表失败:', response.data.msg);
-    //       return {
-    //         success: false,
-    //         error: response.data.msg || '获取订单列表失败'
-    //       };
-    //     }
-    //   } else {
-    //     console.error('获取历史订单列表失败:', response.error);
-    //     return {
-    //       success: false,
-    //       error: response.error || '获取订单列表失败'
-    //     };
-    //   }
-    // } catch (error) {
-    //   console.error('获取历史订单列表时发生错误:', error);
-    //
-    //   // 当网络请求失败时，返回模拟数据用于测试
-    //   console.log('网络请求失败，返回模拟订单数据用于测试');
-    //   return this.getMockOrderData(page, pageSize, status);
-    // }
+    //return this.getMockOrderData(page, pageSize);
+    try {
+      let endpoint = `${ApiEndpoints.HISTORY_ORDERS}?pageNum=${page}&pageSize=${pageSize}`;
+
+
+      // 根据接口文档，历史订单接口返回的数据结构包含code、msg、data字段
+      const response = await this.apiClient.get<HistoryOrderResponse>(endpoint);
+
+      if (response.success && response.data) {
+        // 检查接口返回的code字段
+        if (response.data.code === 1 && response.data.data) {
+          // 转换接口数据为应用数据
+          const orders = OrderDataConverter.convertHistoryOrderList(response.data.data);
+          const convertedResponse: OrderListResponse = {
+            orders: orders,
+            total: response.data.data.total,
+            page: page,
+            pageSize: pageSize
+          };
+
+          console.log('获取历史订单列表成功');
+          return {
+            success: true,
+            data: convertedResponse
+          };
+        } else {
+          console.error('获取历史订单列表失败:', response.data.msg);
+          return {
+            success: false,
+            error: response.data.msg || '获取订单列表失败'
+          };
+        }
+      } else {
+        console.error('获取历史订单列表失败:', response.error);
+        return {
+          success: false,
+          error: response.error || '获取订单列表失败'
+        };
+      }
+    } catch (error) {
+      console.error('获取历史订单列表时发生错误:', error);
+
+      // 当网络请求失败时，返回模拟数据用于测试
+      console.log('网络请求失败，返回模拟订单数据用于测试');
+      return this.getMockOrderData(page, pageSize);
+    }
   }
 
   /**
@@ -263,10 +260,10 @@ export class OrderService {
    * @param payMethod 支付方式
    * @returns 支付结果
    */
-  async payOrder(orderNumber: string, payMethod: number,order:Order): Promise<ApiResponse<PaymentResult>> {
+  async payOrder(payMethod: number,order:Order): Promise<ApiResponse<PaymentResult>> {
     try {
       const payOrderData: PayOrderRequest = {
-        orderNumber,
+        orderNumber:order.orderId,
         payMethod
       };
       const response = await this.apiClient.put<PaymentResult>(ApiEndpoints.ORDER_PAYMENT, payOrderData);

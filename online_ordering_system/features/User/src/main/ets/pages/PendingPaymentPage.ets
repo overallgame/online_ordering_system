@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus, PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 /**
  * 待付款订单页面
  */
@@ -10,8 +10,7 @@ import { ToastComponent } from '../components/ToastComponent';
 export struct PendingPaymentPage {
   @Link orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  @State showPayDialog: boolean = false;
-  @State selectedOrder: Order | null = null;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
 
   aboutToAppear() {
     this.loadPendingPaymentOrders();
@@ -80,7 +79,10 @@ export struct PendingPaymentPage {
                 order: order,
                 mode: 'payment',
                 onPay: () => {
-                  this.showPayOrderDialog(order);
+                  this.handlePayOrder(order);
+                },
+                onCancel:()=>{
+                  this.handleCancelOrder(order)
                 }
               })
             }
@@ -89,6 +91,9 @@ export struct PendingPaymentPage {
 
         })
       }
+      .lanes(
+        new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 12 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -119,7 +124,7 @@ export struct PendingPaymentPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)
@@ -145,9 +150,32 @@ export struct PendingPaymentPage {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  showPayOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showPayDialog = true;
+  async handlePayOrder(order: Order) {
+    const response= await this.orderViewModel.payOrder(1,order);
+    if(response.success)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("支付成功");
+    }
+    else
+    {
+      this.showToast("支付失败");
+    }
+
+
+  }
+
+  async handleCancelOrder(order: Order) {
+    const response= await this.orderViewModel.cancelOrder(order.orderId);
+    if(response)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("取消成功");
+    }
+    else
+    {
+      this.showToast("取消失败");
+    }
   }
 
   getPendingPaymentOrders(): Order[] {
@@ -156,20 +184,6 @@ export struct PendingPaymentPage {
     );
   }
 
-  // async handlePayOrder() {
-  //   if (!this.selectedOrder) return;
-  //
-  //   const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
-  //   this.showPayDialog = false;
-  //
-  //   if (result.success) {
-  //     this.showToast('支付成功');
-  //     // 刷新订单列表
-  //     await this.refreshOrders();
-  //   } else {
-  //     this.showToast('支付失败，请重试');
-  //   }
-  // }
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);

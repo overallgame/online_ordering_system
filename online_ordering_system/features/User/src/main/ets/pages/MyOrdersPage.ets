@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus ,PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 
 /**
  * 我的订单页面
@@ -11,13 +11,10 @@ import { ToastComponent } from '../components/ToastComponent';
 export struct MyOrdersPage {
   @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  @State showCancelDialog: boolean = false;
-  @State showDeleteDialog: boolean = false;
-  @State showPayDialog: boolean = false;
-  @State showRemindDialog: boolean = false;
-  @State showRepeatDialog: boolean = false;
-  @State selectedOrder: Order | null = null;
   @State isSimulating: boolean = false;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
+
+
 
   aboutToAppear() {
     this.loadOrders();
@@ -60,8 +57,6 @@ export struct MyOrdersPage {
         .fontColor('#000000')
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
-
-
     }
     .width('100%')
     .height(56)
@@ -85,24 +80,27 @@ export struct MyOrdersPage {
               order: order,
               mode: 'all',
               onCancel: () => {
-                this.showCancelOrderDialog(order);
+                this.handleCancelOrder(order);
               },
               onDelete: () => {
-                this.showDeleteOrderDialog(order);
+                this.handleDeleteOrder(order);
               },
               onPay: () => {
-                this.showPayOrderDialog(order);
+                this.handlePayOrder(order);
               },
               onRemind: () => {
-                this.showRemindOrderDialog(order);
+                this.handleRemindOrder(order);
               },
               onRepeat: () => {
-                this.showRepeatOrderDialog(order);
+                this.handleRepeatOrder(order);
               }
             })
           }
         })
       }
+      .lanes(
+        new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 16 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -133,7 +131,7 @@ export struct MyOrdersPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)
@@ -159,27 +157,37 @@ export struct MyOrdersPage {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  async showCancelOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showCancelDialog = true;
-    await this.orderViewModel.cancelOrder(order.orderId);
+  async handleCancelOrder(order: Order) {
+    const response= await this.orderViewModel.cancelOrder(order.orderId);
+    if(response)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("取消成功");
+    }
+    else
+    {
+      this.showToast("取消失败");
+    }
   }
 
-  showDeleteOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showDeleteDialog = true;
+  handleDeleteOrder(order: Order) {
+  }
+
+  async  handlePayOrder(order: Order) {
+    const response= await this.orderViewModel.payOrder(1,order);
+    if(response.success)
+    {
+      this.orderViewModel.orders=[...this.orderViewModel.orders];
+      this.showToast("支付成功");
+    }
+    else
+    {
+      this.showToast("支付失败");
+    }
 
   }
 
-  async  showPayOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showPayDialog = true;
-    await this.orderViewModel.payOrder(order.totalAmount.toString(),1,order);
-  }
-
-  async  showRemindOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showRemindDialog = true;
+  async  handleRemindOrder(order: Order) {
     const success=await this.orderViewModel.remindOrder(order.orderId);
     if (success) {
       this.showToast('催单成功，商家会尽快处理');
@@ -188,78 +196,7 @@ export struct MyOrdersPage {
     }
   }
 
-  showRepeatOrderDialog(order: Order) {
-    this.selectedOrder = order;
-    this.showRepeatDialog = true;
-  }
-
-  // async handleCancelOrder() {
-  //   if (!this.selectedOrder) return;
-  //
-  //   const success = await this.orderViewModel.cancelOrder(this.selectedOrder.orderId);
-  //   this.showCancelDialog = false;
-  //
-  //   if (success) {
-  //     this.showToast('订单已取消');
-  //   } else {
-  //     this.showToast('取消订单失败，请重试');
-  //   }
-  // }
-
-  // async handleDeleteOrder() {
-  //   if (!this.selectedOrder) return;
-  //
-  //   const success = await this.orderViewModel.deleteOrder(this.selectedOrder.orderId);
-  //   this.showDeleteDialog = false;
-  //
-  //   if (success) {
-  //     this.showToast('订单已删除');
-  //   } else {
-  //     this.showToast('删除订单失败，请重试');
-  //   }
-  // }
-
-  // async handlePayOrder() {
-  //   if (!this.selectedOrder) return;
-  //
-  //   const result = await this.orderViewModel.payOrder(this.selectedOrder.orderId, 1); // 1表示微信支付
-  //   this.showPayDialog = false;
-  //
-  //   if (result.success) {
-  //     this.showToast('支付成功');
-  //     if (result.paymentUrl) {
-  //       // 这里可以打开支付页面
-  //       console.log('支付URL:', result.paymentUrl);
-  //     }
-  //   } else {
-  //     this.showToast('支付失败，请重试');
-  //   }
-  // }
-
-  async handleRemindOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.remindOrder(this.selectedOrder.orderId);
-    this.showRemindDialog = false;
-    
-    if (success) {
-      this.showToast('催单成功，商家会尽快处理');
-    } else {
-      this.showToast('催单失败，请重试');
-    }
-  }
-
-  async handleRepeatOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.repeatOrder(this.selectedOrder.orderId);
-    this.showRepeatDialog = false;
-    
-    if (success) {
-      this.showToast('再来一单成功，已加入购物车');
-    } else {
-      this.showToast('再来一单失败，请重试');
-    }
+  handleRepeatOrder(order: Order) {
   }
 
   showToast(message: string) {

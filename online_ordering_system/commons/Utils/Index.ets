@@ -1,1 +1,1 @@
-export { BreakpointSystem } from './src/main/ets/utils/BreakpointSystem';
+export { BreakpointSystem,BreakpointTypeEnum ,BreakpointType} from './src/main/ets/utils/BreakpointSystem';

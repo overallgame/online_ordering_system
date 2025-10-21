@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 /**
  * 待收货订单页面
  */
@@ -12,6 +12,7 @@ export struct PendingDeliveryPage {
   @Consume('navStack') navStack: NavPathStack;
   @State showRemindDialog: boolean = false;
   @State selectedOrder: Order | null = null;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
 
   aboutToAppear() {
     this.loadPendingDeliveryOrders();
@@ -74,14 +75,14 @@ export struct PendingDeliveryPage {
     } else {
       List() {
         ForEach(this.orderViewModel.orders, (order: Order) => {
-          if(order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PREPARING || order.status === OrderStatus.READY)
+          if(order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.ACCEPTED || order.status === OrderStatus.DELIVERING)
           {
             ListItem() {
               OrderItemComponent({
                 order: order,
                 mode: 'delivery',
                 onRemind: () => {
-                  this.showRemindOrderDialog(order);
+                  this.handleRemindOrder(order);
                 }
               })
             }
@@ -90,6 +91,8 @@ export struct PendingDeliveryPage {
 
         })
       }
+      .lanes( new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 16 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -120,7 +123,7 @@ export struct PendingDeliveryPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)
@@ -144,8 +147,8 @@ export struct PendingDeliveryPage {
   getPendingDeliveryOrders(): Order[] {
     return this.orderViewModel.orders.filter(order => 
       order.status === OrderStatus.CONFIRMED || 
-      order.status === OrderStatus.PREPARING || 
-      order.status === OrderStatus.READY
+      order.status === OrderStatus.ACCEPTED ||
+      order.status === OrderStatus.DELIVERING
     );
   }
 
@@ -154,23 +157,17 @@ export struct PendingDeliveryPage {
     await this.orderViewModel.loadMoreOrders();
   }
 
-  showRemindOrderDialog(order: Order) {
+  async  handleRemindOrder(order: Order) {
     this.selectedOrder = order;
     this.showRemindDialog = true;
-  }
-
-  async handleRemindOrder() {
-    if (!this.selectedOrder) return;
-    
-    const success = await this.orderViewModel.remindOrder(this.selectedOrder.orderId);
-    this.showRemindDialog = false;
-    
+    const success=await this.orderViewModel.remindOrder(order.orderId);
     if (success) {
       this.showToast('催单成功，商家会尽快处理');
     } else {
       this.showToast('催单失败，请重试');
     }
   }
+
 
   showToast(message: string) {
     ToastComponent.getInstance().show(message);

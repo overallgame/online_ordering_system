@@ -34,8 +34,6 @@ export class UserProfileService {
 
   /**
    * 更新用户资料
-   * @param userUpdateDTO 用户更新数据
-   * @returns 更新结果
    */
   async updateUserProfile(user:User): Promise<ApiResponse<UserProfileUpdateResponse>> {
     try {
