@@ -19,14 +19,15 @@ interface FeatureItem {
   icon: Resource;
 }
 
+@Entry
 @Component
 export struct HomePage {
   @Provide('restaurantPathStack') restaurantPathStack: NavPathStack = new NavPathStack();
   // 轮播图数据
-  @State banners: string[] = [
-    'common/images/banner1.png',
-    'common/images/banner2.png',
-    'common/images/banner3.png'
+  @State banners: Resource[] = [
+    $r('app.media.dish1'),
+    $r('app.media.dish3'),
+    $r('app.media.dish2'),
   ];
   // 功能菜单数据
   @State features: FeatureItem[] = [
@@ -100,7 +101,9 @@ export struct HomePage {
 
   // 根据选中分类加载菜品
   private async loadDishesByCategory() {
-    if (!this.selectedCategory) return;
+    if (!this.selectedCategory) {
+      return;
+    }
 
     this.status = LoadStatus.Loading;
     this.error = undefined;
@@ -154,13 +157,16 @@ export struct HomePage {
     Row() {
       Column() {
         Text('鸿蒙智能点餐')
+          .fontFamily('HarmonyHeiTi-Bold')
           .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+          .fontWeight(700)
+          .fontColor(Color.Black)
+          .lineHeight(33)
           .margin({ bottom: 6 })
-        
+
         Text('欢迎光临，享受美食时光')
-          .fontSize(15)
+          .fontSize(14)
+          .fontFamily('HarmonyHeiTi')
           .fontColor('#666666')
       }
       .alignItems(HorizontalAlign.Start)
@@ -175,21 +181,25 @@ export struct HomePage {
   @Builder
   buildBanner() {
     Swiper() {
-      ForEach(this.banners, (banner: string) => {
+      ForEach(this.banners, (banner: Resource) => {
         Image(banner)
-          .width('100%')
-          .height(180)
           .objectFit(ImageFit.Cover)
-          .borderRadius(12)
+          .width('92%')
+          .padding({ top: 11, left: 16, right: 16 })
+          .aspectRatio(656 / 288)
+          .borderRadius(16)
       })
     }
-    .width('92%')
-    .height(this.bannerHeight())
-    .alignSelf(ItemAlign.Center)
-    .indicator(true)
-    .autoPlay(true)
-    .interval(3000)
-    .margin({ bottom: 10 })
+    .width('96%')
+    .autoPlay(false)
+    .loop(true)
+    .margin({ bottom: 16 })
+    .displayCount(new BreakpointType({ sm: 1, md: 3, lg: 3 }).getValue(this.currentBreakpoint))
+    .displayMode(SwiperDisplayMode.STRETCH)
+    .indicator(this.currentBreakpoint === BreakpointTypeEnum.SM ?
+    Indicator.dot().color('#1a000000').selectedColor('#0A59F7') :
+      false)
+    .nextMargin(new BreakpointType<Length>({ sm: 0, md: 12, lg: 266 }).getValue(this.currentBreakpoint))
   }
 
   // 第三部分：功能按钮
@@ -224,7 +234,12 @@ export struct HomePage {
     .padding({ top: 12, bottom: 12 })
     .alignSelf(ItemAlign.Center)
     .margin({ bottom: 20 })
-    .shadow({ radius: 2, color: '#1A000000', offsetX: 0, offsetY: 1 })
+    .shadow({
+      radius: 2,
+      color: '#1A000000',
+      offsetX: 0,
+      offsetY: 1
+    })
   }
 
   // 第四部分：分类栏
@@ -285,10 +300,11 @@ export struct HomePage {
             GridItem() {
               this.buildDishCard(dish)
             }
+            .width(new BreakpointType<Length>({ sm: 160, md: 164, lg: 180 }).getValue(this.currentBreakpoint))
           }, (dish: Dish) => dish.dishId)
         }
+        .columnsGap(new BreakpointType<Length>({ sm: 8, md: 12, lg: 16 }).getValue(this.currentBreakpoint))
         .columnsTemplate(this.gridColumns())
-        .columnsGap(12)
         .rowsGap(12)
         .width('92%')
         .scrollBar(BarState.Off)
@@ -349,7 +365,12 @@ export struct HomePage {
     .width('100%')
     .backgroundColor(Color.White)
     .borderRadius(8)
-    .shadow({ radius: 2, color: '#1A000000', offsetX: 0, offsetY: 1 })
+    .shadow({
+      radius: 2,
+      color: '#1A000000',
+      offsetX: 0,
+      offsetY: 1
+    })
     .onClick(() => {
       if (dish.isAvailable) {
         this.showDishDetail(dish);
@@ -386,8 +407,8 @@ export struct HomePage {
     const cols: string | undefined = new BreakpointType<string>({
       sm: '1fr 1fr',
       md: '1fr 1fr',
-      lg: '1fr 1fr',
-      xl: '1fr 1fr 1fr'
+      lg: '1fr 1fr 1fr',
+      xl: '1fr 1fr 1fr 1fr'
     }).getValue(this.currentBreakpoint);
     return cols || '1fr 1fr';
   }
@@ -400,16 +421,6 @@ export struct HomePage {
       xl: 140
     }).getValue(this.currentBreakpoint);
     return h || 100;
-  }
-
-  private bannerHeight(): number {
-    const h: number | undefined = new BreakpointType<number>({
-      sm: 140,
-      md: 180,
-      lg: 200,
-      xl: 220
-    }).getValue(this.currentBreakpoint);
-    return h || 180;
   }
 
   private featureBarHeight(): number {
