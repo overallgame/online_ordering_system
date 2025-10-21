@@ -25,7 +25,7 @@ export struct ExpandableOrderDetails {
             .fontSize(12)
             .fontColor('#4CAF50')
 
-          Image($r('app.media.setting'))
+          Image($r("app.media.open"))
             .width(16)
             .height(16)
             .margin({ left: 4 })

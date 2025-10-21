@@ -11,78 +11,123 @@ export struct UserHeaderView {
 
   build() {
     Stack() {
-      // 背景图片
-      Image($r('app.media.user_background'))
-        .height(120)
+      // 渐变背景
+      Column()
         .width('100%')
+        .height('100%')
+        .linearGradient({
+          direction: GradientDirection.Bottom,
+          colors: [['#667eea', 0.0], ['#764ba2', 1.0]]
+        })
+      
+      // 装饰性圆形背景
+      Circle()
+        .width(120)
+        .height(120)
+        .fill('#FFFFFF')
+        .opacity(0.1)
+        .position({ x: '80%', y: '-20%' })
+      
+      Circle()
+        .width(80)
+        .height(80)
+        .fill('#FFFFFF')
+        .opacity(0.08)
+        .position({ x: '-10%', y: '60%' })
       
       // 用户信息内容
       Row() {
         // 用户头像
         Stack() {
           Image(this.userViewModel.user?.avatar ? this.userViewModel.user.avatar : $r('app.media.default_avatar'))
-            .width(60)
-            .height(60)
-            .borderRadius(30)
-            .border({ width: 2, color: '#FFFFFF' })
-            .shadow({ radius: 4, color: '#00000020', offsetX: 0, offsetY: 2 })
+            .width(70)
+            .height(70)
+            .borderRadius(35)
+            .border({ width: 3, color: '#FFFFFF' })
+            .shadow({ radius: 8, color: '#00000030', offsetX: 0, offsetY: 4 })
             .objectFit(ImageFit.Cover)
+            .transition(TransitionEffect.OPACITY)
+          
+          // 头像装饰环
+          Circle()
+            .width(76)
+            .height(76)
+            .stroke('#FFFFFF')
+            .strokeWidth(1)
+            .opacity(0.3)
         }
+        
         // 用户信息
         Column() {
-          Text(this.userViewModel.user?.username?this.userViewModel.user.username:"XXX")
-            .fontSize(20)
-            .fontColor('#000000')
+          Text(this.userViewModel.user?.username ? this.userViewModel.user.username : "XXX")
+            .fontSize(22)
+            .fontColor('#FFFFFF')
             .fontWeight(FontWeight.Bold)
-            .margin({ bottom: 4 })
+            .margin({ bottom: 6 })
           
-          Text('个人中心 >')
-            .fontSize(14)
-            .fontColor('#666666')
-            .onClick(() => {
-              if (this.navStack) {
-                this.navStack.pushPath({ name: 'UserDetailPage' });
-              } else {
-                console.error("navStack is not initialized");
-              }
-
-            })
+          Row() {
+            Text('查看个人资料')
+              .fontSize(14)
+              .fontColor('#FFFFFF')
+              .opacity(0.9)
+            
+            Image($r('app.media.open'))
+              .width(12)
+              .height(12)
+              .margin({ left: 4 })
+              .opacity(0.8)
+          }
+          .onClick(() => {
+            if (this.navStack) {
+              this.navStack.pop();
+              this.navStack.pushPath({ name: 'UserDetailPage' });
+            } else {
+              console.error("navStack is not initialized");
+            }
+          })
         }
         .alignItems(HorizontalAlign.Start)
-        .margin({ left: 16 })
+        .margin({ left: 20 })
         .layoutWeight(1)
         
         // 右上角功能按钮
-        Row() {
-          
-          Column() {
+        Column() {
+          Stack() {
+            Circle()
+              .width(36)
+              .height(36)
+              .fill('#FFFFFF')
+              .opacity(0.2)
+            
             Image($r('app.media.setting'))
-              .height(15)
-              .width(15)
-            Text('设置')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ top: 4 })
+              .width(18)
+              .height(18)
+              .fillColor('#FFFFFF')
           }
-          .margin({ left: 20 })
           .onClick(() => {
             if (this.navStack) {
               this.navStack.pushPath({ name: 'SettingPage' });
             } else {
               console.error("navStack is not initialized");
             }
-
           })
+          
+          Text('设置')
+            .fontSize(12)
+            .fontColor('#FFFFFF')
+            .opacity(0.9)
+            .margin({ top: 6 })
         }
+        .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 20, bottom: 20 })
-      .alignItems(VerticalAlign.Top)
+      .padding({ left: 20, right: 20, top: 30, bottom: 30 })
+      .alignItems(VerticalAlign.Center)
     }
     .width('100%')
-    .height(120)
-
-
+    .height(160)
+    .borderRadius({ bottomLeft: 20, bottomRight: 20 })
+    .shadow({ radius: 12, color: '#00000020', offsetX: 0, offsetY: 4 })
   }
 
   /**

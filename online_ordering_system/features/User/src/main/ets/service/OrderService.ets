@@ -77,7 +77,7 @@ export class OrderService {
     page: number = 1, 
     pageSize: number = 10,
   ): Promise<ApiResponse<OrderListResponse>> {
-    //return this.getMockOrderData(page, pageSize, status);
+    //return this.getMockOrderData(page, pageSize);
     try {
       let endpoint = `${ApiEndpoints.HISTORY_ORDERS}?pageNum=${page}&pageSize=${pageSize}`;
 

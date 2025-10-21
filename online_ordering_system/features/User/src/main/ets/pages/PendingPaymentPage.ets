@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus, PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 /**
  * 待付款订单页面
  */
@@ -10,9 +10,7 @@ import { ToastComponent } from '../components/ToastComponent';
 export struct PendingPaymentPage {
   @Link orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  // @State showPayDialog: boolean = false;
-  // @State showCancelDialog: boolean = false;
-  // @State selectedOrder: Order | null = null;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
 
   aboutToAppear() {
     this.loadPendingPaymentOrders();
@@ -93,6 +91,9 @@ export struct PendingPaymentPage {
 
         })
       }
+      .lanes(
+        new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 12 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -123,7 +124,7 @@ export struct PendingPaymentPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)

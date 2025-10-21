@@ -38,11 +38,11 @@ export  struct UserPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F5F5F5')
+      .backgroundColor('#F8F9FA')
     }
     .title('个人中心')
     .hideTitleBar(true)
-    .mode(NavigationMode.Stack)
+    .mode(NavigationMode.Auto)
     .navDestination(this.PageMap)
   }
 

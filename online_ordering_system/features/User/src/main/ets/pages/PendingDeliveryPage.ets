@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 /**
  * 待收货订单页面
  */
@@ -12,6 +12,7 @@ export struct PendingDeliveryPage {
   @Consume('navStack') navStack: NavPathStack;
   @State showRemindDialog: boolean = false;
   @State selectedOrder: Order | null = null;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
 
   aboutToAppear() {
     this.loadPendingDeliveryOrders();
@@ -90,6 +91,8 @@ export struct PendingDeliveryPage {
 
         })
       }
+      .lanes( new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 16 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -120,7 +123,7 @@ export struct PendingDeliveryPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)

@@ -2,7 +2,7 @@ import { OrderViewModel } from '../viewmodel/OrderViewModel';
 import { Order, OrderStatus ,PaymentMethod } from 'common';
 import { OrderItemComponent } from '../components/OrderItemComponent';
 import { ToastComponent } from '../components/ToastComponent';
-
+import {BreakpointType,BreakpointTypeEnum} from 'utils'
 
 /**
  * 我的订单页面
@@ -11,13 +11,10 @@ import { ToastComponent } from '../components/ToastComponent';
 export struct MyOrdersPage {
   @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  // @State showCancelDialog: boolean = false;
-  // @State showDeleteDialog: boolean = false;
-  // @State showPayDialog: boolean = false;
-  // @State showRemindDialog: boolean = false;
-  // @State showRepeatDialog: boolean = false;
-  // @State selectedOrder: Order | null = null;
   @State isSimulating: boolean = false;
+  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
+
+
 
   aboutToAppear() {
     this.loadOrders();
@@ -101,6 +98,9 @@ export struct MyOrdersPage {
           }
         })
       }
+      .lanes(
+        new BreakpointType<number>({ sm: 1, md: 2, lg: 2 }).getValue(this.currentBreakpoint),
+        new BreakpointType<number>({ sm: 0, md: 12, lg: 16 }).getValue(this.currentBreakpoint))
       .width('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, top: 8 })
@@ -131,7 +131,7 @@ export struct MyOrdersPage {
   @Builder
   buildEmptyView() {
     Column() {
-      Image($r('app.media.setting'))
+      Image($r('app.media.no_order'))
         .width(120)
         .height(120)
         .opacity(0.6)
