@@ -24,6 +24,7 @@ export class AddressRepository {
       const response = await this.apiClient.get<ApiResponseT<AddressBookResponse>>(
         ApiEndpoints.ADDRESS_DEFAULT
       );
+      console.log("getDefaultAddress",JSON.stringify(response));
       if (response.success && response.data && response.data.data) {
         return AddressConverter.fromApiResponse(response.data.data);
       } else {

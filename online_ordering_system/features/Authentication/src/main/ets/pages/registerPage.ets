@@ -33,6 +33,22 @@ export struct RegisterPage {
           .margin({ bottom: 20 })
 
         TextInput({
+          placeholder: '请输入手机号',
+          text: this.registerRequest.phone
+        })
+          .width('90%')
+          .height(50)
+          .padding(10)
+          .borderRadius(10)
+          .backgroundColor(Color.White)
+          .type(InputType.PhoneNumber)
+          .onChange((value: string) => {
+            this.registerRequest.phone = value;
+            this.clearMessages();
+          })
+          .margin({ bottom: 20 })
+
+        TextInput({
           placeholder: '请输入密码',
           text: this.registerRequest.password
         })
@@ -133,7 +149,8 @@ export struct RegisterPage {
 
   private isFormValid(): boolean {
     return this.registerRequest.username.trim().length > 0 &&
-      this.registerRequest.password.trim().length >= 6
+      this.registerRequest.password.trim().length >= 6 &&
+      this.registerRequest.phone.trim().length > 0
   }
 
   private clearMessages(): void {

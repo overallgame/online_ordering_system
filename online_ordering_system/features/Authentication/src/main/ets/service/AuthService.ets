@@ -76,7 +76,8 @@ export class AuthService {
     try {
       const requestBody: RegisterRequestBody = {
         username: registerRequest.username,
-        password: registerRequest.password
+        password: registerRequest.password,
+        phone: registerRequest.phone
       };
 
       const response: ApiResponse<RegisterApiResponse> = await this.apiClient.post(
