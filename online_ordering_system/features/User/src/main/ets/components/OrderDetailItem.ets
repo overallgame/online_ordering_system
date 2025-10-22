@@ -10,12 +10,15 @@ export struct OrderDetailItem {
   build() {
     Row() {
       // 商品图片
-      Image($r('app.media.setting'))
+      Image(this.orderItem.dish?.image)
         .width(60)
         .height(60)
         .borderRadius(6)
         .objectFit(ImageFit.Cover)
         .margin({ right: 12 })
+        .onClick(()=>{
+          console.error("图片："+this.orderItem.dish?.image);
+        })
 
       // 商品信息
       Column() {

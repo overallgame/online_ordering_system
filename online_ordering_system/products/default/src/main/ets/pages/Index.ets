@@ -114,7 +114,7 @@ struct Index {
 
       TabContent() {
         UserPage()
-      }.tabBar(this.tabBarBuilder("我", 1, $r("app.media.mine"), $r("app.media.mine_active")))
+      }.tabBar(this.tabBarBuilder("我的", 1, $r("app.media.mine"), $r("app.media.mine_active")))
     }
     .scrollable(false)
     .vertical(this.currentBreakpoint === BreakpointTypeEnum.LG ? true : false)

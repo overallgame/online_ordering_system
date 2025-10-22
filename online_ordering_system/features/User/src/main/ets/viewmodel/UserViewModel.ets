@@ -96,9 +96,7 @@ export class UserViewModel {
     }
 
     try {
-      // 设置同步状态
       this.isSyncing = true;
-
 
       // 调用后端API更新用户信息
       const response = await this.userProfileService.updateUserProfile(user);

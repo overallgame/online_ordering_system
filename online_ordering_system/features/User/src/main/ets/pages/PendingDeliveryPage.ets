@@ -10,7 +10,7 @@ import {BreakpointType,BreakpointTypeEnum} from 'utils'
 export struct PendingDeliveryPage {
   @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  @State showRemindDialog: boolean = false;
+  //@State showRemindDialog: boolean = false;
   @State selectedOrder: Order | null = null;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
 
@@ -158,8 +158,6 @@ export struct PendingDeliveryPage {
   }
 
   async  handleRemindOrder(order: Order) {
-    this.selectedOrder = order;
-    this.showRemindDialog = true;
     const success=await this.orderViewModel.remindOrder(order.orderId);
     if (success) {
       this.showToast('催单成功，商家会尽快处理');

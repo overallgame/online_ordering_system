@@ -119,29 +119,7 @@ export struct UserDetailPage {
   @Builder
   buildAvatarSection() {
     Column() {
-      Column() {
-        Image(this.editUser.avatar ? this.editUser.avatar : $r('app.media.default_avatar'))
-          .width(100)
-          .height(100)
-          .borderRadius(50)
-          .border({ width: 3, color: '#FFFFFF' })
-          .shadow({ radius: 8, color: '#00000020', offsetX: 0, offsetY: 4 })
-          .objectFit(ImageFit.Cover)
-        if(this.isEditing)
-        {
-          Text('点击更换头像')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ top: 8 })
-        }
 
-
-      }
-      .onClick(() => {
-        if (this.isEditing) {
-          this.selectAvatar();
-        }
-      })
       
 
     }
@@ -163,6 +141,38 @@ export struct UserDetailPage {
         .fontColor('#000000')
         .alignSelf(ItemAlign.Start)
         .margin({ bottom: 16 })
+
+      Row() {
+        Text("头像")
+          .fontSize(14)
+          .fontColor('#666666')
+          .width(80)
+          .textAlign(TextAlign.Start)
+        Column() {
+          Image(this.editUser.avatar ? this.editUser.avatar : $r('app.media.default_avatar'))
+            .width(60)
+            .height(60)
+            .borderRadius(50)
+            .border({ width: 3, color: '#FFFFFF' })
+            .shadow({ radius: 8, color: '#00000020', offsetX: 0, offsetY: 4 })
+            .objectFit(ImageFit.Cover)
+            .margin({right:10})
+          if(this.isEditing)
+          {
+            Text('点击更换头像')
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ top: 8 })
+          }
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.End)
+        .onClick(() => {
+          if (this.isEditing) {
+            this.selectAvatar();
+          }
+        })
+      }
 
 
       InfoItem({
@@ -239,7 +249,7 @@ export struct UserDetailPage {
         .margin({ bottom: 16 })
 
       InfoItem({
-        label: '收获地址',
+        label: '地址',
         value: this.editUser?.address || '未设置',
         onChange: (value: string) => {
           this.editUser.address = value;
@@ -323,6 +333,7 @@ export struct UserDetailPage {
           .fontColor('#000000')
           .layoutWeight(1)
           .textAlign(TextAlign.End)
+          .margin({right:20})
       }
     }
     .width('100%')

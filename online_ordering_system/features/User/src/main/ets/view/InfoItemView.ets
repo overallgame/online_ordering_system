@@ -33,6 +33,7 @@ export struct InfoItem {
           .fontColor('#000000')
           .layoutWeight(1)
           .textAlign(TextAlign.End)
+          .margin({right:20})
       }
     }
     .width('100%')

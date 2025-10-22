@@ -36,7 +36,7 @@ export struct MainContentView {
                   .fill('#FF9F43')
                   .opacity(0.1)
                 
-                Image($r('app.media.pending_review')) // 临时使用现有图标
+                Image($r('app.media.like')) // 临时使用现有图标
                   .width(30)
                   .height(30)
                   .fillColor('#FF9F43')
@@ -68,7 +68,7 @@ export struct MainContentView {
                   .fill('#6C5CE7')
                   .opacity(0.1)
                 
-                Image($r('app.media.pending_payment')) // 临时使用现有图标
+                Image($r('app.media.preference')) // 临时使用现有图标
                   .width(30)
                   .height(30)
                   .fillColor('#6C5CE7')
@@ -137,7 +137,7 @@ export struct MainContentView {
                   .fill('#E17055')
                   .opacity(0.1)
                 
-                Image($r('app.media.my_order')) // 临时使用现有图标
+                Image($r('app.media.serving')) // 临时使用现有图标
                   .width(30)
                   .height(30)
                   .fillColor('#E17055')

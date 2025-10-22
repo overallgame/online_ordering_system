@@ -1,6 +1,5 @@
 import { Order, OrderStatus, PaymentStatus, OrderType, PaymentMethod } from 'common';
 import { OrderService, PaymentResult } from '../service/OrderService';
-import {OrderServiceTest} from '../test/OrderServiceTest'
 import { OrderDataConverter } from '../util/OrderDataConverter';
 import {AppDataManager} from 'common'
 import { OrderStatusManager, OrderStatusListener } from '../manager/OrderStatusManager';
@@ -20,9 +19,7 @@ export class OrderViewModel implements OrderStatusListener {
   hasMore: boolean = true;
   totalCount: number = 0;
   pageSize: number = 10;
-  
-  // 筛选条件
-  //selectedStatus?: number; // 订单状态筛选
+
   beginTime?: string; // 开始时间
   endTime?: string; // 结束时间
   
@@ -50,24 +47,6 @@ export class OrderViewModel implements OrderStatusListener {
     }
 
   }
-
-  // /**
-  //  * 设置筛选条件
-  //  */
-  // setFilter(status?: number, beginTime?: string, endTime?: string): void {
-  //   this.selectedStatus = status;
-  //   this.beginTime = beginTime;
-  //   this.endTime = endTime;
-  // }
-  //
-  // /**
-  //  * 清除筛选条件
-  //  */
-  // clearFilter(): void {
-  //   this.selectedStatus = undefined;
-  //   this.beginTime = undefined;
-  //   this.endTime = undefined;
-  // }
 
   /**
    * 加载订单列表
@@ -244,7 +223,6 @@ export class OrderViewModel implements OrderStatusListener {
    * 设置状态筛选
    */
   setStatusFilter(status?: number): void {
-    //this.selectedStatus = status;
     this.currentPage = 1;
     this.orders = [];
     this.hasMore = true;

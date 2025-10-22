@@ -11,10 +11,8 @@ import {BreakpointType,BreakpointTypeEnum} from 'utils'
 export struct MyOrdersPage {
   @ObjectLink orderViewModel: OrderViewModel;
   @Consume('navStack') navStack: NavPathStack;
-  @State isSimulating: boolean = false;
+  //@State isSimulating: boolean = false;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointTypeEnum.MD;
-
-
 
   aboutToAppear() {
     this.loadOrders();
