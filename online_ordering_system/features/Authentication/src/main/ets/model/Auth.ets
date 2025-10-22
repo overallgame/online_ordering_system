@@ -21,6 +21,7 @@ export class LoginRequest {
 export class RegisterRequest {
   username: string = '';
   password: string = '';
+  phone: string = '';
 
   validate(): ValidationResult {
     if (!this.username.trim()) {
@@ -32,7 +33,18 @@ export class RegisterRequest {
     if (this.password.length < 6) {
       return { isValid: false, message: '密码长度不能少于6位' };
     }
+    if (!this.phone.trim()) {
+      return { isValid: false, message: '请输入手机号' };
+    }
+    if (!this.isValidPhone(this.phone)) {
+      return { isValid: false, message: '请输入正确的手机号格式' };
+    }
     return { isValid: true, message: '' };
+  }
+
+  private isValidPhone(phone: string): boolean {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    return phoneRegex.test(phone);
   }
 }
 
@@ -49,6 +61,7 @@ export interface LoginRequestBody {
 export interface RegisterRequestBody {
   username: string;
   password: string;
+  phone: string;
 }
 
 // API响应结构

@@ -37,6 +37,7 @@ export class OrderRepository {
         ApiEndpoints.ORDER_SUBMIT,
         orderSubmitDTO
       );
+      console.log("submitOrder", JSON.stringify(response));
 
       if (response.success && response.data) {
         return response;

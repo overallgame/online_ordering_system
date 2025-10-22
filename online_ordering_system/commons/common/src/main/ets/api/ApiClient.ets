@@ -158,7 +158,7 @@ export class ApiEndpoints {
 
   // 地址簿相关API
   static readonly ADDRESS_LIST = '/user/addressBook/list';       // 查询地址列表
-  static readonly ADDRESS_DEFAULT = '/user/addressBook/default'; // 查询默认地址
+  static readonly ADDRESS_DEFAULT = '/user/addressBook/presetDefault'; // 查询默认地址
   static readonly ADDRESS_ADD = '/user/addressBook';             // 新增地址
   static readonly ADDRESS_UPDATE = '/user/addressBook';          // 修改地址
   static readonly ADDRESS_DELETE = '/user/addressBook';          // 删除地址
