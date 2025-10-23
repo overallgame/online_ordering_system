@@ -38,7 +38,7 @@ export  struct UserPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F8F9FA')
+      .backgroundColor('#F5F5F5')
     }
     .title('个人中心')
     .hideTitleBar(true)

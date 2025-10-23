@@ -77,11 +77,24 @@ export interface UserLoginVO {
   token: string;
 }
 
+//获取用户数据
+export interface UserProfileResponse {
+  avatar : string;
+  id : number;
+  name : string;
+  phone : string;
+  sex : string;
+  username : string;
+}
+
 // 登录API响应
 export type LoginApiResponse = ApiResult<UserLoginVO>;
 
 // 注册API响应
 export type RegisterApiResponse = ApiResult<object>;
+
+// 获取用户信息API响应
+export type UserProfileApiResponse = ApiResult<UserProfileResponse>;
 
 // 应用层登录响应
 export class AuthResponse {
@@ -89,4 +102,16 @@ export class AuthResponse {
   message: string = '';
   user?: User;
   token?: string;
+}
+
+export class  UserResponse {
+  success : boolean=false;
+  message : string="";
+  avatar : string="";
+  id : number=0;
+  name : string="";
+  phone : string="";
+  sex : string="";
+  username : string="";
+
 }

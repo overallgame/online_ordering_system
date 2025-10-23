@@ -94,17 +94,15 @@ export class UserViewModel {
     if (!user) {
       return false;
     }
+    console.log("用户:"+user.sex);
 
     try {
       this.isSyncing = true;
-
-      // 调用后端API更新用户信息
       const response = await this.userProfileService.updateUserProfile(user);
       
       if (response.success) {
-        // 后端更新成功，更新本地数据
         this.user = user;
-        await AppDataManager.getInstance().setCurrentUser(this.user);
+        await AppDataManager.getInstance().setCurrentUser(user);
         this.lastSyncTime = Date.now();
         console.log('用户资料更新成功');
         this.isSyncing = false;

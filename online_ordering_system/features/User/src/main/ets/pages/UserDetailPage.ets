@@ -23,11 +23,15 @@ export struct UserDetailPage {
   async loadUserInfo() {
     // 等待UserViewModel加载用户信息
     await this.userViewModel.loadUserInfo();
+
+
     
     const currentUser = this.userViewModel.user;
     if (currentUser) {
       // 由于UserViewModel现在使用监听器，这里只需要更新editUser
       this.editUser = this.userViewModel.copyUser(currentUser);
+      console.log("test："+this.editUser.sex);
+      console.log("test："+this.editUser.username);
     } else {
       console.warn('当前没有登录用户');
       // 可以在这里添加跳转到登录页面的逻辑

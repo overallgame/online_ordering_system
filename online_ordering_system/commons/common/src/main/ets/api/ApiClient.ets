@@ -47,6 +47,7 @@ export class ApiClient {
       }
 
       const response = await httpRequest.request(url, options);
+      console.error("mmm"+response.responseCode)
 
       // 处理401未授权响应
       if (response.responseCode === 401) {
@@ -128,7 +129,7 @@ export class ApiEndpoints {
   static readonly LOGIN = '/user/user/login';
   static readonly REGISTER = '/user/user/register';
   static readonly LOGOUT = '/api/v1/auth/logout';
-  static readonly USER_PROFILE = '/api/v1/user/profile';
+  static readonly USER_PROFILE = '/user/user/profile';
   static readonly USER_UPDATE_PROFILE = '/user/user/profile';  // 更新用户信息
 
   // 分类相关接口

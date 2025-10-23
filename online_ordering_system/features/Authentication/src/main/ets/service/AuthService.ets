@@ -1,5 +1,5 @@
 import { ApiClient, ApiEndpoints, ApiResponse, AppDataManager, User, UserPreferences } from "common";
-import { AuthResponse, LoginRequest, LoginRequestBody, RegisterRequest, RegisterRequestBody, LoginApiResponse, UserLoginVO, RegisterApiResponse } from "../model/Auth";
+import { AuthResponse, LoginRequest, LoginRequestBody, RegisterRequest, RegisterRequestBody, LoginApiResponse, UserLoginVO, RegisterApiResponse, UserProfileResponse ,UserProfileApiResponse ,UserResponse} from "../model/Auth";
 
 export class AuthService {
   private apiClient: ApiClient = ApiClient.getInstance();
@@ -34,6 +34,14 @@ export class AuthService {
           const user = this.createUserFromLoginVO(apiResult.data);
           user.isLoggedIn = true;
           user.lastLoginTime = Date.now();
+
+          await this.appDataManager.setCurrentUser(user);
+
+          const result=await this.getUserProfile();
+          user.avatar=result.avatar;
+          user.phone=result.phone;
+          user.username=result.name;
+          user.sex=result.sex;
 
           await this.appDataManager.setCurrentUser(user);
 
@@ -115,6 +123,60 @@ export class AuthService {
     }
   }
 
+  /**
+   * 获取当前用户资料
+   */
+  async getUserProfile(): Promise<UserResponse> {
+    try {
+      const response: ApiResponse<UserProfileApiResponse> = await this.apiClient.get(
+        ApiEndpoints.USER_PROFILE,
+        true // 需要token
+      );
+
+      if (response.success && response.data) {
+          const apiResult=response.data.data;
+          return {
+            success:true,
+            message:response.data.msg,
+            avatar:apiResult.avatar,
+            id:apiResult.id,
+            name:apiResult.name,
+            phone:apiResult.phone,
+            sex:apiResult.sex,
+            username:apiResult.username
+          }
+
+      }else {
+        return {
+          success:true,
+          message:"获取失败",
+          avatar:"",
+          id:0,
+          name:"",
+          phone:"",
+          sex:"",
+          username:""
+
+        }
+      }
+    } catch (error) {
+      console.error('Get user profile error:', error);
+      return {
+        success:true,
+        message:"获取失败",
+        avatar:"",
+        id:0,
+        name:"",
+        phone:"",
+        sex:"",
+        username:""
+
+      }
+    }
+  }
+
+
+
   private createUserFromLoginVO(data: UserLoginVO): User {
     const user = new User();
     user.userId = data.id.toString();
@@ -124,10 +186,11 @@ export class AuthService {
     user.avatar = '';
     user.token = data.token;
     user.createTime = Date.now();
+    user.isLoggedIn = true;
     user.preferences = new UserPreferences();
 
     return user;
   }
 }
 
-export { AuthResponse, LoginRequest, RegisterRequest };
+export { AuthResponse, LoginRequest, RegisterRequest, UserProfileResponse };
