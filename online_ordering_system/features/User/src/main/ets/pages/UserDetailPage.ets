@@ -10,22 +10,12 @@ export struct UserDetailPage {
   @State isEditing: boolean = false;
   @State editUser: User = new User();
   @State isAvatarDialogVisible: boolean = false;
-  @State userSex: string = '未知';  // 本地管理性别字段
-  // @State showPhoneDialog: boolean = false;
-  // @State showEmailDialog: boolean = false;
-  // @State showAddressDialog: boolean = false;
-  //@State toastComponent: ToastComponent = new ToastComponent();
 
   aboutToAppear() {
     this.loadUserInfo();
   }
 
   async loadUserInfo() {
-    // 等待UserViewModel加载用户信息
-    await this.userViewModel.loadUserInfo();
-
-
-    
     const currentUser = this.userViewModel.user;
     if (currentUser) {
       // 由于UserViewModel现在使用监听器，这里只需要更新editUser
@@ -34,7 +24,6 @@ export struct UserDetailPage {
       console.log("test："+this.editUser.username);
     } else {
       console.warn('当前没有登录用户');
-      // 可以在这里添加跳转到登录页面的逻辑
     }
   }
 
@@ -104,9 +93,6 @@ export struct UserDetailPage {
   @Builder
   buildUserDetailContent() {
     Column() {
-      // 头像区域
-      this.buildAvatarSection()
-      
       // 基本信息
       this.buildBasicInfoSection()
       
@@ -119,22 +105,6 @@ export struct UserDetailPage {
     .width('100%')
     .layoutWeight(1)
   }
-
-  @Builder
-  buildAvatarSection() {
-    Column() {
-
-      
-
-    }
-    .width('100%')
-    .padding({ top: 20, bottom: 20 })
-    .backgroundColor('#FFFFFF')
-    .margin({ top: 16, left: 16, right: 16 })
-    .borderRadius(12)
-    .shadow({ radius: 4, color: '#00000010', offsetX: 0, offsetY: 2 })
-  }
-
 
   @Builder
   buildBasicInfoSection() {
@@ -262,13 +232,6 @@ export struct UserDetailPage {
         readonly:false
       })
 
-      // InfoItem({
-      //   label: '注册时间',
-      //   value: this.formatDate(this.editUser?.createTime || 0) || '未设置',
-      //   onChange: null,
-      //   isEditing: this.isEditing,
-      //   readonly:false
-      // })
 
       InfoItem({
         label: '登录时间',

@@ -10,11 +10,11 @@ interface SettingSection {
 export struct SettingPage {
   @Consume('navStack') navStack: NavPathStack;
   @Consume('mainPathStack') mainPathStack: NavPathStack;
-  @State userViewModel: UserViewModel = new UserViewModel();
+  @Link userViewModel: UserViewModel;
   @State showLogoutDialog: boolean = false;
 
   aboutToAppear() {
-    this.userViewModel.loadUserInfo();
+
   }
 
   build() {

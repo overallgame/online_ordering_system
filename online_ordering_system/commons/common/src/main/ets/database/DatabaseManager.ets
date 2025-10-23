@@ -44,6 +44,7 @@ export class DatabaseManager {
         email TEXT,
         avatar TEXT,
         address TEXT,
+        sex TEXT,
         token TEXT,
         preferences TEXT,
         created_at INTEGER,
@@ -65,6 +66,7 @@ export class DatabaseManager {
     if (!this.rdbStore) {
       return false;
     }
+    console.log("ttt"+user.sex);
 
     try {
       const valuesBucket: relationalStore.ValuesBucket = {
@@ -74,6 +76,7 @@ export class DatabaseManager {
         'email': user.email || '',
         'avatar': user.avatar || '',
         'address': user.address || '',
+        'sex' : user.sex || '',
         'token': user.token || '',
         'preferences': JSON.stringify({
           theme: user.preferences.theme,
@@ -85,7 +88,7 @@ export class DatabaseManager {
         'created_at': user.createTime,
         'updated_at': Date.now(),
         'last_login': user.lastLoginTime,
-        'is_logged_in': user.isLoggedIn ? 1 : 0
+        'is_logged_in': user.isLoggedIn ? 1 : 0,
       };
 
       // 检查用户是否已存在
@@ -202,6 +205,7 @@ export class DatabaseManager {
       user.email = resultSet.getString(resultSet.getColumnIndex('email'));
       user.avatar = resultSet.getString(resultSet.getColumnIndex('avatar'));
       user.address = resultSet.getString(resultSet.getColumnIndex('address'));
+      user.sex = resultSet.getString(resultSet.getColumnIndex('sex'));
       user.token = resultSet.getString(resultSet.getColumnIndex('token'));
       user.createTime = resultSet.getLong(resultSet.getColumnIndex('created_at'));
       user.lastLoginTime = resultSet.getLong(resultSet.getColumnIndex('last_login'));

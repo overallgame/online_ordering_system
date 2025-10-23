@@ -8,6 +8,7 @@ import {MyOrdersPage} from './MyOrdersPage'
 import {OrderViewModel} from '../viewmodel/OrderViewModel'
 import {PendingDeliveryPage} from './PendingDeliveryPage'
 import {PendingPaymentPage} from './PendingPaymentPage'
+import {CustomerServicePage} from './CustomerServicePage'
 @Entry
 @Component
 export  struct UserPage {
@@ -20,13 +21,15 @@ export  struct UserPage {
     if (name === 'MyOrdersPage') {
       MyOrdersPage({orderViewModel:this.orderViewModel})
     }else if(name=='SettingPage'){
-      SettingPage()
+      SettingPage({ userViewModel: this.userViewModel })
     }else if(name=='UserDetailPage'){
       UserDetailPage({ userViewModel: this.userViewModel })
     }else if(name=='PendingDeliveryPage'){
       PendingDeliveryPage({ orderViewModel:this.orderViewModel })
     }else if(name=='PendingPaymentPage'){
       PendingPaymentPage({ orderViewModel:this.orderViewModel })
+    }else if(name=='CustomerServicePage'){
+      CustomerServicePage()
     }
   }
 

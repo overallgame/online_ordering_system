@@ -5,8 +5,9 @@ export class User {
   email?: string = '';
   avatar?: string;
   address?: string;
-  createTime: number = 0;
   sex?:string;
+  createTime: number = 0;
+
 
   // 用户偏好设置
   preferences: UserPreferences = new UserPreferences();

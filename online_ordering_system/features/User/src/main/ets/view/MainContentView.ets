@@ -157,7 +157,11 @@ export struct MainContentView {
             .margin({ left: 8 })
             .shadow({ radius: 6, color: '#00000008', offsetX: 0, offsetY: 2 })
             .onClick(() => {
-              // 客服中心功能
+              if (this.navStack) {
+                this.navStack.pushPath({ name: 'CustomerServicePage' });
+              } else {
+                console.error("navStack is not initialized");
+              }
             })
           }
           .width('100%')

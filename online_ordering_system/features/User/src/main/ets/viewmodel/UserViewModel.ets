@@ -30,7 +30,8 @@ export class UserViewModel {
       const currentUser = AppDataManager.getInstance().getCurrentUser();
       if (currentUser) {
         this.user = currentUser;
-        console.error(this.user.avatar+"ttt");
+        console.error(this.user.sex+"pppttt");
+        console.error(this.user.avatar+"pppttt");
       } else {
         // 只有在没有用户数据时才创建默认用户
         this.user = new User();
@@ -40,6 +41,7 @@ export class UserViewModel {
         this.user.email = "未设置"; // 可选，默认空字符串
         this.user.avatar = "https://example.com/avatar.jpg"; // 可选，头像URL
         this.user.address = "未设置"; // 可选，默认地址
+        this.user.sex = "未设置"; // 可选，性别
         this.user.createTime = Date.now(); // 必填，创建时间戳（鸿蒙建议使用系统时间API）
         this.user.isLoggedIn = true;     // 登录状态
         this.user.token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // 登录令牌
@@ -63,29 +65,6 @@ export class UserViewModel {
   updateUser(user: User | null): void {
     this.user = user;
   }
-
-  /**
-   * 更新用户头像
-   */
-  async updateAvatar(avatarUrl: string): Promise<boolean> {
-    if (!this.user) {
-      return false;
-    }
-
-    try {
-      this.user.avatar = avatarUrl;
-      await AppDataManager.getInstance().setCurrentUser(this.user);
-      
-
-      return true;
-    } catch (error) {
-      console.error('更新头像失败:', error);
-      return false;
-    }
-  }
-
-
-
 
   /**
    * 更新用户资料（本地+后端同步）
@@ -119,9 +98,6 @@ export class UserViewModel {
     }
   }
 
-
-
-
   /**
    * 检查用户是否已登录
    */
@@ -139,15 +115,6 @@ export class UserViewModel {
     return this.user.username || this.user.phone || '用户';
   }
 
-  /**
-   * 获取用户头像URL
-   */
-  getAvatarUrl(): string {
-    if (!this.user || !this.user.avatar) {
-      return '';
-    }
-    return this.user.avatar;
-  }
 
 
 
