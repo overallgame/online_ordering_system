@@ -59,7 +59,7 @@ export struct MainContentView {
               // 收藏夹功能
             })
             
-            // 优惠券
+            // 帮助中心
             Column() {
               Stack() {
                 Circle()
@@ -68,14 +68,14 @@ export struct MainContentView {
                   .fill('#6C5CE7')
                   .opacity(0.1)
                 
-                Image($r('app.media.preference')) // 临时使用现有图标
+                Image($r('app.media.help'))
                   .width(30)
                   .height(30)
                   .fillColor('#6C5CE7')
               }
               .margin({ bottom: 8 })
               
-              Text('优惠券')
+              Text('帮助中心')
                 .fontSize(14)
                 .fontColor('#333333')
                 .fontWeight(FontWeight.Medium)
@@ -88,7 +88,11 @@ export struct MainContentView {
             .margin({ left: 8 })
             .shadow({ radius: 6, color: '#00000008', offsetX: 0, offsetY: 2 })
             .onClick(() => {
-              // 优惠券功能
+              if (this.navStack) {
+                this.navStack.pushPath({ name: 'HelpCenterPage' });
+              } else {
+                console.error("navStack is not initialized");
+              }
             })
           }
           .width('100%')
@@ -105,7 +109,7 @@ export struct MainContentView {
                   .fill('#00B894')
                   .opacity(0.1)
                 
-                Image($r('app.media.pending_delivery')) // 临时使用现有图标
+                Image($r('app.media.pending_delivery'))
                   .width(30)
                   .height(30)
                   .fillColor('#00B894')

@@ -9,6 +9,8 @@ import {OrderViewModel} from '../viewmodel/OrderViewModel'
 import {PendingDeliveryPage} from './PendingDeliveryPage'
 import {PendingPaymentPage} from './PendingPaymentPage'
 import {CustomerServicePage} from './CustomerServicePage'
+import {HelpCenterPage} from './HelpCenterPage'
+import {HelpDetailPage} from './HelpDetailPage'
 @Entry
 @Component
 export  struct UserPage {
@@ -30,6 +32,10 @@ export  struct UserPage {
       PendingPaymentPage({ orderViewModel:this.orderViewModel })
     }else if(name=='CustomerServicePage'){
       CustomerServicePage()
+    }else if(name=='HelpCenterPage'){
+      HelpCenterPage()
+    }else if(name=='HelpDetailPage'){
+      HelpDetailPage()
     }
   }
 

@@ -63,9 +63,6 @@ export struct CustomerServicePage {
       
       // 预约回电卡片
       this.buildCallbackCard()
-      
-      // 常见问题卡片
-      this.buildFAQCard()
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 16 })
@@ -128,7 +125,7 @@ export struct CustomerServicePage {
         }
         .margin({ right: 8 })
         
-        Text('当前在线，响应时间 < 30秒')
+        Text('当前在线')
           .fontSize(14)
           .fontColor('#4CAF50')
           .fontWeight(FontWeight.Medium)
@@ -290,66 +287,5 @@ export struct CustomerServicePage {
     .borderRadius(16)
     .margin({ bottom: 16 })
     .shadow({ radius: 8, color: '#00000008', offsetX: 0, offsetY: 2 })
-  }
-
-  @Builder
-  buildFAQCard() {
-    Column() {
-      Text('常见问题')
-        .fontSize(16)
-        .fontColor('#333333')
-        .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 16 })
-        .alignSelf(ItemAlign.Start)
-      
-      // 常见问题列表
-      Column() {
-        this.buildFAQItem('如何取消订单？', '在订单详情页面点击"取消订单"按钮')
-        this.buildFAQItem('订单什么时候发货？', '一般情况下24小时内发货')
-        this.buildFAQItem('如何申请退款？', '联系客服或在我的订单中申请退款')
-        this.buildFAQItem('配送范围包括哪些地区？', '目前支持全国大部分城市配送')
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding(20)
-    .backgroundColor('#FFFFFF')
-    .borderRadius(16)
-    .shadow({ radius: 8, color: '#00000008', offsetX: 0, offsetY: 2 })
-  }
-
-  @Builder
-  buildFAQItem(question: string, answer: string) {
-    Column() {
-      Row() {
-        Text(question)
-          .fontSize(14)
-          .fontColor('#333333')
-          .fontWeight(FontWeight.Medium)
-          .layoutWeight(1)
-        
-        Image($r('app.media.open'))
-          .width(16)
-          .height(16)
-          .fillColor('#999999')
-          .rotate({ angle: this.customerServiceViewModel.expandedFAQ === question ? 180 : 0 })
-      }
-      .width('100%')
-      .padding(12)
-      .onClick(() => {
-        this.customerServiceViewModel.toggleFAQ(question);
-      })
-      
-      if (this.customerServiceViewModel.expandedFAQ === question) {
-        Text(answer)
-          .fontSize(12)
-          .fontColor('#666666')
-          .padding({ left: 12, right: 12, bottom: 12 })
-          .width('100%')
-          .textAlign(TextAlign.Start)
-      }
-    }
-    .width('100%')
-    .margin({ bottom: 8 })
   }
 }
