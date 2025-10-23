@@ -262,13 +262,13 @@ export struct UserDetailPage {
         readonly:false
       })
 
-      InfoItem({
-        label: '注册时间',
-        value: this.formatDate(this.editUser?.createTime || 0) || '未设置',
-        onChange: null,
-        isEditing: this.isEditing,
-        readonly:false
-      })
+      // InfoItem({
+      //   label: '注册时间',
+      //   value: this.formatDate(this.editUser?.createTime || 0) || '未设置',
+      //   onChange: null,
+      //   isEditing: this.isEditing,
+      //   readonly:false
+      // })
 
       InfoItem({
         label: '登录时间',

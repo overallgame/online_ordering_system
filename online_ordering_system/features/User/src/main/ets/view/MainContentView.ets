@@ -175,7 +175,7 @@ export struct MainContentView {
             .height(80)
             .fill('#F8F9FA')
           
-          Image($r('app.media.pending_review'))
+          Image($r('app.media.more'))
             .width(32)
             .height(32)
             .fillColor('#ADB5BD')

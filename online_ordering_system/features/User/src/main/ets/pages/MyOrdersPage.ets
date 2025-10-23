@@ -27,7 +27,7 @@ export struct MyOrdersPage {
       Column() {
         // 顶部导航栏
         this.buildTopBar()
-        
+
         // 订单列表
         this.buildOrderList()
       }
@@ -48,7 +48,7 @@ export struct MyOrdersPage {
         .onClick(() => {
           this.navStack.pop();
         })
-      
+
       Text('我的订单')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
@@ -115,7 +115,7 @@ export struct MyOrdersPage {
         .width(40)
         .height(40)
         .color('#4CAF50')
-      
+
       Text('加载中...')
         .fontSize(14)
         .fontColor('#666666')
@@ -133,12 +133,12 @@ export struct MyOrdersPage {
         .width(120)
         .height(120)
         .opacity(0.6)
-      
+
       Text('暂无订单')
         .fontSize(16)
         .fontColor('#666666')
         .margin({ top: 16 })
-      
+
       Text('快去下单吧~')
         .fontSize(14)
         .fontColor('#999999')

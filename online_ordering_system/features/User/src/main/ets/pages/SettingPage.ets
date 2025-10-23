@@ -23,14 +23,11 @@ export struct SettingPage {
         // 顶部导航栏
         this.buildTopBar()
         this.buildSettingSection('应用设置', [
-          { title: '通知设置', icon: $r('app.media.setting'), onTap: (): void => this.showToast('功能开发中') },
-          { title: '隐私设置', icon: $r('app.media.setting'), onTap: (): void => this.showToast('功能开发中') },
-          { title: '关于我们', icon: $r('app.media.setting'), onTap: (): void => this.showToast('功能开发中') }
+          { title: '通知设置', icon: $r('app.media.inform'), onTap: (): void => this.showToast('功能开发中') },
+          { title: '隐私设置', icon: $r('app.media.private'), onTap: (): void => this.showToast('功能开发中') },
+          { title: '关于我们', icon: $r('app.media.about_us'), onTap: (): void => this.showToast('功能开发中') }
         ])
         this.buildLogoutSection()
-
-
-
 
       }
       .width('100%')
@@ -114,7 +111,7 @@ export struct SettingPage {
   buildLogoutSection() {
     Column() {
       Row() {
-        Image($r('app.media.setting'))
+        Image($r('app.media.logout'))
           .height(20)
           .width(20)
           .margin({ right: 12 })

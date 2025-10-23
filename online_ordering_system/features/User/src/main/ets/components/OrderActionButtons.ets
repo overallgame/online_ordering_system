@@ -115,15 +115,15 @@ export struct OrderActionButtons {
 
   private canRemindOrder(): boolean {
     // 已付款、制作中、待取餐状态可以催单
-    return this.order.status === OrderStatus.CONFIRMED || 
-           this.order.status === OrderStatus.ACCEPTED ||
-           this.order.status === OrderStatus.DELIVERING;
+    return this.order.status === OrderStatus.CONFIRMED ||
+      this.order.status === OrderStatus.ACCEPTED ||
+      this.order.status === OrderStatus.DELIVERING;
   }
 
   private canRepeatOrder(): boolean {
     // 已完成或已取消的订单可以再来一单
-    return this.order.status === OrderStatus.COMPLETED || 
-           this.order.status === OrderStatus.CANCELLED;
+    return this.order.status === OrderStatus.COMPLETED ||
+      this.order.status === OrderStatus.CANCELLED;
   }
 
   // 根据模式判断是否显示按钮
