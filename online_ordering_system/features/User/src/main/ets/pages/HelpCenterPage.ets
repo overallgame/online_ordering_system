@@ -105,7 +105,7 @@ export struct HelpCenterPage {
         .width('100%')
         .padding({ left: 16, right: 16, bottom: 20 })
       }
-      .layoutWeight(1)
+      //.layoutWeight(1)
     }
   }
 
